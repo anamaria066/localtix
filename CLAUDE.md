@@ -1,7 +1,9 @@
 # CLAUDE.md – LocalTix
 
 Utilizatorul va scrie de obicei: **„Sunt [nume], membrul [A/B/C]. Hai să facem task-ul T-x.y.”**
-Găsește task-ul în backlog (secțiunea 5), lucrează **doar** la el și respectă regulile TDD (secțiunea 4).
+Găsește task-ul în backlog (secțiunea 6), lucrează **doar** la el și respectă regulile TDD (secțiunea 5).
+
+**Înainte de a începe orice task**, verifică ce s-a implementat deja în proiect (entități, servicii, repository-uri, controllere, template-uri, teste, `data.sql`) și spune pe scurt ce ai găsit relevant. Folosește și corelează codul existent (ex. aceleași entități, enum-uri, servicii, layout comun) în loc să creezi duplicate sau variante paralele. Dacă un task de care depinde cel curent lipsește, spune-o și fă doar minimul necesar.
 
 ---
 
@@ -65,7 +67,35 @@ src/test/java/ro/ase/localtix/service → teste unitare, câte o clasă de test 
 
 ---
 
-## 4. Reguli TDD – OBLIGATORII
+## 4. Aspect și temă vizuală
+
+Toată aplicația are **aceeași temă**: **dark mode**, modernă, cu accente de **albastru și mov** și text alb. Fiecare pagină nouă trebuie să arate ca făcând parte din aceeași aplicație.
+
+### Paletă de culori
+| Rol | Culoare |
+|---|---|
+| Fundal pagină | `#0f0f1a` (aproape negru, cu tentă albastră) |
+| Fundal carduri / formulare / navbar | `#1a1a2e` |
+| Borduri / separatoare | `#2e2e4a` |
+| Accent principal (butoane, linkuri) | albastru `#4f6bff` |
+| Accent secundar (hover, badge-uri, evidențieri) | mov `#8b5cf6` |
+| Gradient pentru titluri și butoane principale | `linear-gradient(135deg, #4f6bff, #8b5cf6)` |
+| Text principal | alb `#ffffff` |
+| Text secundar | gri deschis `#a0a0c0` |
+| Succes / eroare / avertizare | `#22c55e` / `#ef4444` / `#f59e0b` |
+
+### Reguli
+1. Bootstrap rulează în **dark mode** (`<html data-bs-theme="dark">`); culorile proprii se pun într-un singur fișier, `static/css/style.css`, ca **variabile CSS** (`:root { --lt-bg: ...; }`), reutilizate peste tot.
+2. Toate paginile folosesc **același layout comun** (fragment Thymeleaf: navbar cu logo „LocalTix”, conținut, footer). Nu se duplică navbar-ul în fiecare pagină.
+3. Carduri cu colțuri rotunjite, umbre discrete și un efect subtil de hover (glow albastru/mov); spațiere generoasă.
+4. Butoanele principale folosesc gradientul albastru → mov; cele secundare sunt outline.
+5. Mesajele de eroare și de confirmare folosesc alertele Bootstrap în culorile de mai sus.
+6. Harta sălii (US-7): locuri **libere** albastru, **blocate temporar** mov/estompat, **vândute** gri închis, **selectate** alb cu contur albastru.
+7. Aplicația trebuie să arate bine și pe mobil (grila Bootstrap, responsive).
+
+---
+
+## 5. Reguli TDD – OBLIGATORII
 
 După fiecare fază, utilizatorul face o **captură de ecran**. De aceea, **după fiecare fază te OPREȘTI** și aștepți confirmarea. Nu trece niciodată singur la faza următoare.
 
@@ -93,7 +123,7 @@ Dacă task-ul cerut depinde de ceva ce nu există încă (ex. o entitate), spune
 
 ---
 
-## 5. Backlog
+## 6. Backlog
 
 ### SPRINT 1 – Conturi
 
@@ -260,7 +290,7 @@ Criterii de acceptare:
 
 ---
 
-## 6. Rezumat: cine ce task-uri are
+## 7. Rezumat: cine ce task-uri are
 
 | Membru | Story-uri |
 |---|---|
