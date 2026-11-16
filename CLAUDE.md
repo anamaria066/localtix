@@ -156,7 +156,7 @@ Dacă task-ul cerut depinde de ceva ce nu există încă (ex. o entitate), spune
 
 ### SPRINT 1 – Conturi
 
-#### US-1 Creare cont — responsabil **A**
+#### US-1 Creare cont — responsabil **A** ✅ implementat (T-1.1 – T-1.4)
 Ca vizitator, vreau să îmi creez un cont, pentru a putea cumpăra bilete.
 Criterii de acceptare:
 1. Câmpuri obligatorii: nume, prenume, email, telefon, data nașterii, parolă, confirmare parolă.

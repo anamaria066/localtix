@@ -122,6 +122,24 @@ main {
     color: var(--lt-text-muted);
 }
 
+.form-control.is-invalid,
+.form-control.is-invalid:focus {
+    border-color: var(--lt-danger);
+}
+
+.invalid-feedback {
+    color: var(--lt-danger);
+}
+
+/* Links inside cards / forms */
+.lt-card a:not(.btn) {
+    color: var(--lt-blue);
+}
+
+.lt-card a:not(.btn):hover {
+    color: var(--lt-purple);
+}
+
 .form-label {
     color: var(--lt-text-muted);
     font-size: 0.9rem;
