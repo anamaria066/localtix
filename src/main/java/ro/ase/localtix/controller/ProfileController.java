@@ -17,9 +17,6 @@ public class ProfileController {
     /** Session key holding the id of the logged-in user (set by the login page, US-2). */
     public static final String SESSION_USER_ID = "userId";
 
-    /** TEMPORARY: demo user from data.sql, used until login (US-2) exists. */
-    private static final Long DEMO_USER_ID = 1L;
-
     private final UserRepository userRepository;
     private final ProfileService profileService = new ProfileService();
 
@@ -30,6 +27,9 @@ public class ProfileController {
     @GetMapping("/profile")
     public String showProfile(HttpSession session, Model model) {
         User user = getCurrentUser(session);
+        if (user == null) {
+            return "redirect:/login";
+        }
         model.addAttribute("user", user);
         fillForm(model, user.getLastName(), user.getFirstName(), user.getEmail(), user.getPhone());
         return "profile";
@@ -44,6 +44,9 @@ public class ProfileController {
                                 Model model,
                                 RedirectAttributes redirectAttributes) {
         User user = getCurrentUser(session);
+        if (user == null) {
+            return "redirect:/login";
+        }
         try {
             String message = profileService.update(user, lastName.trim(), firstName.trim(),
                     email.trim(), phone.trim(), userRepository.findAllEmails());
@@ -58,12 +61,13 @@ public class ProfileController {
         }
     }
 
+    /** The logged-in user, or null if nobody is logged in. */
     private User getCurrentUser(HttpSession session) {
         Long userId = (Long) session.getAttribute(SESSION_USER_ID);
         if (userId == null) {
-            userId = DEMO_USER_ID; // TEMPORARY until login exists (US-2)
+            return null;
         }
-        return userRepository.findById(userId).orElseThrow();
+        return userRepository.findById(userId).orElse(null);
     }
 
     /** Values shown in the edit form (kept as typed when there is an error). */

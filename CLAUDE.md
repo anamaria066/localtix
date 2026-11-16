@@ -179,7 +179,13 @@ Criterii de acceptare:
 > - Dacă adaugi coloane obligatorii (ex. `password`), actualizează și utilizatorii demo din `data.sql`, altfel aplicația nu mai pornește.
 > - Pagina de înregistrare folosește layoutul comun (`fragments/layout.html`) și `style.css`.
 
-#### US-2 Autentificare — responsabil **B**
+> ⚠️ **Atenție (lăsat de Maria, US-2):**
+> - `User` are deja câmpurile `password`, `failedAttempts` (implicit 0) și `lockedUntil`, adăugate pentru login. Nu le redenumi – le folosește `AuthService`. La înregistrare setează doar `password` (cu `setPassword`).
+> - Utilizatorii demo din `data.sql` au deja parola `Parola123!`. Parola se salvează în clar (comparată cu `equals` în `AuthService`); dacă introduci hashing, actualizează și `AuthService.isPasswordCorrect` și `data.sql`.
+> - Login-ul există: `/login`, `/logout` (`LoginController`). Utilizatorul logat e în sesiune cu cheia `ProfileController.SESSION_USER_ID`. După înregistrare poți redirecționa spre `/login`.
+> - `UserRepository.findByEmailIgnoreCase(email)` există (folosit la login).
+
+#### US-2 Autentificare — responsabil **B** ✅ implementat (T-2.1 – T-2.4)
 Ca utilizator înregistrat, vreau să mă autentific cu email și parolă, pentru a avea acces la contul meu.
 Criterii de acceptare:
 1. Cu email și parolă corecte, utilizatorul intră în cont.
@@ -193,6 +199,8 @@ Criterii de acceptare:
 - **T-2.3 [REFACTOR]** – constante (3 încercări, 15 minute), curățare cod
 - **T-2.4 [UI]** – pagina de login + logout (sesiune HTTP simplă)
 
+> ✅ Notele de mai jos au fost rezolvate la T-2.4 (fallback-ul demo a fost șters, link-urile Login/Logout sunt în navbar, utilizatorii demo au parolă).
+>
 > ⚠️ **Atenție (lăsat de Ana, US-3):**
 > - Utilizatorul logat se ține în sesiune cu cheia `ProfileController.SESSION_USER_ID` (`"userId"`). La login: `session.setAttribute(ProfileController.SESSION_USER_ID, user.getId())`; la logout: `session.invalidate()`.
 > - Până la login, `ProfileController` folosește **temporar** utilizatorul demo cu id 1 (`DEMO_USER_ID`). După ce login-ul funcționează, **șterge acest fallback** din `getCurrentUser(...)` și redirecționează spre pagina de login dacă nu e nimeni logat.
