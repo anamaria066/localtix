@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('My Profile')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+
+<main class="container py-5">
+    <h1 class="fw-bold lt-gradient-text mb-1">My Profile</h1>
+    <p class="lt-muted mb-4">View and update your personal details.</p>
+
+    <div th:if="${successMessage}" class="alert alert-success" role="alert" th:text="${successMessage}"></div>
+    <div th:if="${errorMessage}" class="alert alert-danger" role="alert" th:text="${errorMessage}"></div>
+
+    <div class="row g-4">
+        <!-- Account details (view) -->
+        <div class="col-lg-4">
+            <div class="lt-card p-4 h-100">
+                <div class="lt-avatar mb-3"
+                     th:text="${#strings.substring(user.firstName, 0, 1) + #strings.substring(user.lastName, 0, 1)}">AP</div>
+                <h2 class="h4 text-center mb-1" th:text="${user.firstName + ' ' + user.lastName}">Ana Popescu</h2>
+                <p class="text-center lt-muted mb-4" th:text="${user.email}">ana@localtix.ro</p>
+
+                <div class="lt-detail">
+                    <span class="lt-muted">Name</span>
+                    <span th:text="${user.firstName + ' ' + user.lastName}">Ana Popescu</span>
+                </div>
+                <div class="lt-detail">
+                    <span class="lt-muted">Email</span>
+                    <span th:text="${user.email}">ana@localtix.ro</span>
+                </div>
+                <div class="lt-detail">
+                    <span class="lt-muted">Phone</span>
+                    <span th:text="${user.phone}">0712345678</span>
+                </div>
+                <div class="lt-detail">
+                    <span class="lt-muted">Date of birth</span>
+                    <span th:text="${#temporals.format(user.birthDate, 'dd MMMM yyyy')}">10 May 2003</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Edit form -->
+        <div class="col-lg-8">
+            <div class="lt-card p-4">
+                <h2 class="h5 mb-4">Edit profile</h2>
+                <form th:action="@{/profile}" method="post">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="firstName" class="form-label">First name</label>
+                            <input type="text" id="firstName" name="firstName" class="form-control"
+                                   th:value="${formFirstName}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="lastName" class="form-label">Last name</label>
+                            <input type="text" id="lastName" name="lastName" class="form-control"
+                                   th:value="${formLastName}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" id="email" name="email" class="form-control"
+                                   th:value="${formEmail}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="phone" class="form-label">Phone</label>
+                            <input type="tel" id="phone" name="phone" class="form-control"
+                                   th:value="${formPhone}" placeholder="07xxxxxxxx" required>
+                            <div class="form-text lt-muted">Romanian format: 07xxxxxxxx</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="birthDate" class="form-label">Date of birth</label>
+                            <input type="text" id="birthDate" class="form-control"
+                                   th:value="${#temporals.format(user.birthDate, 'dd MMMM yyyy')}" disabled>
+                            <div class="form-text lt-muted">Date of birth cannot be changed.</div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex flex-wrap gap-2 mt-4">
+                        <button type="submit" class="btn btn-lt-primary px-4">Save changes</button>
+                        <a th:href="@{/profile}" class="btn btn-lt-outline px-4">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

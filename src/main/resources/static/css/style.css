@@ -1,0 +1,179 @@
+/* LocalTix theme – dark mode with blue / purple accents (see CLAUDE.md, section 4) */
+:root {
+    --lt-bg: #0f0f1a;
+    --lt-surface: #1a1a2e;
+    --lt-border: #2e2e4a;
+    --lt-blue: #4f6bff;
+    --lt-purple: #8b5cf6;
+    --lt-gradient: linear-gradient(135deg, #4f6bff, #8b5cf6);
+    --lt-text: #ffffff;
+    --lt-text-muted: #a0a0c0;
+    --lt-success: #22c55e;
+    --lt-danger: #ef4444;
+    --lt-warning: #f59e0b;
+}
+
+body {
+    background-color: var(--lt-bg);
+    background-image: radial-gradient(circle at 15% 0%, rgba(79, 107, 255, 0.12), transparent 40%),
+                      radial-gradient(circle at 85% 10%, rgba(139, 92, 246, 0.12), transparent 40%);
+    background-attachment: fixed;
+    color: var(--lt-text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+main {
+    flex: 1;
+}
+
+/* Navbar */
+.lt-navbar {
+    background-color: rgba(26, 26, 46, 0.85);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--lt-border);
+}
+
+.lt-brand {
+    font-weight: 800;
+    font-size: 1.5rem;
+    letter-spacing: 0.5px;
+}
+
+.lt-navbar .nav-link {
+    color: var(--lt-text-muted);
+}
+
+.lt-navbar .nav-link:hover,
+.lt-navbar .nav-link.active {
+    color: var(--lt-text);
+}
+
+/* Text */
+.lt-gradient-text {
+    background: var(--lt-gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.lt-muted {
+    color: var(--lt-text-muted);
+}
+
+/* Cards */
+.lt-card {
+    background-color: var(--lt-surface);
+    border: 1px solid var(--lt-border);
+    border-radius: 1rem;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.lt-card:hover {
+    border-color: rgba(139, 92, 246, 0.5);
+    box-shadow: 0 8px 28px rgba(79, 107, 255, 0.18);
+}
+
+/* Buttons */
+.btn-lt-primary {
+    background: var(--lt-gradient);
+    border: none;
+    color: var(--lt-text);
+    font-weight: 600;
+}
+
+.btn-lt-primary:hover,
+.btn-lt-primary:focus {
+    color: var(--lt-text);
+    filter: brightness(1.12);
+    box-shadow: 0 0 16px rgba(139, 92, 246, 0.45);
+}
+
+.btn-lt-outline {
+    border: 1px solid var(--lt-blue);
+    color: var(--lt-text);
+    background: transparent;
+}
+
+.btn-lt-outline:hover {
+    border-color: var(--lt-purple);
+    background-color: rgba(139, 92, 246, 0.15);
+    color: var(--lt-text);
+}
+
+/* Forms */
+.form-control {
+    background-color: var(--lt-bg);
+    border-color: var(--lt-border);
+    color: var(--lt-text);
+}
+
+.form-control:focus {
+    background-color: var(--lt-bg);
+    border-color: var(--lt-purple);
+    color: var(--lt-text);
+    box-shadow: 0 0 0 0.2rem rgba(139, 92, 246, 0.25);
+}
+
+.form-control:disabled {
+    background-color: rgba(46, 46, 74, 0.4);
+    color: var(--lt-text-muted);
+}
+
+.form-label {
+    color: var(--lt-text-muted);
+    font-size: 0.9rem;
+}
+
+/* Alerts */
+.alert-success {
+    background-color: rgba(34, 197, 94, 0.12);
+    border-color: var(--lt-success);
+    color: #bbf7d0;
+}
+
+.alert-danger {
+    background-color: rgba(239, 68, 68, 0.12);
+    border-color: var(--lt-danger);
+    color: #fecaca;
+}
+
+/* Profile page */
+.lt-avatar {
+    width: 88px;
+    height: 88px;
+    border-radius: 50%;
+    background: var(--lt-gradient);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0 auto;
+    box-shadow: 0 0 24px rgba(139, 92, 246, 0.4);
+}
+
+.lt-detail {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--lt-border);
+}
+
+.lt-detail:last-child {
+    border-bottom: none;
+}
+
+.lt-detail span:last-child {
+    text-align: right;
+    word-break: break-all;
+}
+
+/* Footer */
+.lt-footer {
+    border-top: 1px solid var(--lt-border);
+    color: var(--lt-text-muted);
+}

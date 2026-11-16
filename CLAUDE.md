@@ -3,7 +3,13 @@
 Utilizatorul va scrie de obicei: **„Sunt [nume], membrul [A/B/C]. Hai să facem task-ul T-x.y.”**
 Găsește task-ul în backlog (secțiunea 6), lucrează **doar** la el și respectă regulile TDD (secțiunea 5).
 
-**Înainte de a începe orice task**, verifică ce s-a implementat deja în proiect (entități, servicii, repository-uri, controllere, template-uri, teste, `data.sql`) și spune pe scurt ce ai găsit relevant. Folosește și corelează codul existent (ex. aceleași entități, enum-uri, servicii, layout comun) în loc să creezi duplicate sau variante paralele. Dacă un task de care depinde cel curent lipsește, spune-o și fă doar minimul necesar.
+### ⚠️ PASUL 0 – OBLIGATORIU, înainte de ORICE task (inclusiv RED)
+Nu scrie niciun rând de cod până nu ai făcut acești pași:
+1. **Citește codul existent din proiect**: `model`, `repository`, `service`, `controller`, `templates` (inclusiv `fragments/layout.html`), `static/css/style.css`, `data.sql`, `application.properties` și testele din `src/test`. Rulează `git log --oneline` ca să vezi ce task-uri au fost deja făcute.
+2. **Citește notele „⚠️ Atenție” de la story-ul tău din backlog** (secțiunea 6) – acolo sunt lucruri lăsate de colegi de care depinde implementarea ta.
+3. **Spune pe scurt utilizatorului** ce ai găsit relevant pentru task (ce există deja, ce poți refolosi, ce lipsește).
+4. **Corelează-te cu codul existent**: folosește aceleași entități, enum-uri, servicii, repository-uri, layout comun și același `data.sql`. **Nu crea duplicate sau variante paralele** (ex. a doua clasă `User`, alt layout, alt fișier CSS). Dacă trebuie să extinzi o clasă existentă, extinde-o fără să strici ce folosesc colegii; testele existente trebuie să rămână verzi.
+5. Dacă un task de care depinde cel curent lipsește, spune-o și fă doar minimul necesar, apoi **adaugă o notă „⚠️ Atenție” în backlog** la story-ul colegului care va trebui să continue sau să înlocuiască acel minim.
 
 ---
 
@@ -43,7 +49,7 @@ Toți trei membrii sunt developeri. **Fiecare task are un singur responsabil** �
 ### Structura pachetelor
 ```
 src/main/java/ro/ase/localtix
-├── model        → entități JPA și enum-uri (User, Event, Seat, Ticket, Order, Categorie...)
+├── model        → entități JPA și enum-uri (User, Event, Seat, Ticket, Order, Category...)
 ├── repository   → interfețe Spring Data JPA
 ├── service      → logica de business (aici se face TDD)
 └── controller   → controllere MVC
@@ -57,10 +63,10 @@ src/test/java/ro/ase/localtix/service → teste unitare, câte o clasă de test 
 
 ### Reguli de cod
 1. **Logica de business stă în `service`, în Java simplu**, fără Spring și fără bază de date în clasele testate, ca testele unitare să ruleze fără context Spring.
-2. **Nu folosi `LocalDateTime.now()` în logica de business.** Ora curentă se primește ca parametru (`LocalDateTime acum`), ca regulile cu 10 minute / 15 minute / 48 de ore / 14 zile să fie testabile.
-3. **Clase în engleză** (`PriceCalculator`, `RefundService`), **metode și metode de test în română descriptivă** (`calculeaza(...)`, `studentPrimeste30LaSuta()`), **toate mesajele afișate utilizatorului în engleză**.
+2. **Nu folosi `LocalDateTime.now()` în logica de business.** Ora curentă se primește ca parametru (`LocalDateTime now`), ca regulile cu 10 minute / 15 minute / 48 de ore / 14 zile să fie testabile.
+3. **Tot codul este în engleză**: nume de clase, metode, metode de test, variabile, parametri, câmpuri, constante, enum-uri, excepții, comentarii, nume de template-uri și URL-uri (ex. `PriceCalculator.calculate(basePrice, category, daysBefore)`, `studentGets30PercentDiscount()`). **Toate mesajele afișate utilizatorului sunt tot în engleză.** Doar explicațiile date în chat sunt în română.
 4. Sumele de bani se rotunjesc la 2 zecimale.
-5. Erorile de business se semnalează prin excepții cu mesaje clare în engleză (afișate în interfață) (ex. `IllegalArgumentException` sau excepții proprii ca `LocNedisponibilException`).
+5. Erorile de business se semnalează prin excepții cu mesaje clare în engleză (afișate în interfață) (ex. `IllegalArgumentException` sau excepții proprii ca `SeatUnavailableException`).
 6. Cod simplu și lizibil – membrii echipei trebuie să-l poată explica. Fără over-engineering.
 7. După fiecare fază, explică pe scurt și simplu codul scris.
 8. Nu face commit/push decât dacă ți se cere. Format mesaj: `T-6.2 [GREEN] implementare PriceCalculator`.
@@ -117,13 +123,29 @@ După fiecare fază, utilizatorul face o **captură de ecran**. De aceea, **dup�
 3. **STOP:** „📸 Rulează testele și fă captura cu codul refactorizat și testele VERZI.”
 
 ### [UI] și alte task-uri fără teste
-Construiește pagina Thymeleaf și controllerul, folosind serviciile deja implementate. La final spune la ce URL se vede pagina (`http://localhost:8080/...`). **STOP** la finalul task-ului.
+Construiește pagina Thymeleaf și controllerul, folosind serviciile deja implementate. La final spune la ce URL se vede pagina (`http://localhost:8080/...`) și explică utilizatorului cum să verifice pagina în browser (vezi mai jos). **STOP** la finalul task-ului.
+
+### Ghid de verificare a UI-ului în browser (obligatoriu la final de task [UI])
+După orice task [UI], dă-i utilizatorului un ghid scurt, pas cu pas, ca să poată verifica singur pagina:
+1. **Pornirea aplicației**: în IntelliJ, ▶️ Run pe `LocaltixApplication` (sau `./mvnw spring-boot:run` în terminal) și așteaptă mesajul `Started LocaltixApplication`. Dacă apare „Port 8080 was already in use”, aplicația rulează deja și trebuie oprită acolo.
+2. **URL-ul exact** al paginii și, dacă e cazul, cu ce utilizator să se autentifice (date din `data.sql`).
+3. **Scenarii de verificat, câte unul pentru fiecare criteriu de acceptare**, cu **valori concrete** de introdus (ex. telefon `0812345678`) și **ce trebuie să apară exact** (mesajul în engleză, culoarea alertei, ce se schimbă pe pagină). Include atât un caz valid, cât și cazuri invalide.
+4. **Verificarea în baza de date (opțional)**: consola H2 la `http://localhost:8080/h2-console`, cu JDBC URL `jdbc:h2:mem:localtix`, user `sa`, fără parolă, plus un `SELECT` util (ex. `SELECT * FROM users;`).
+5. **Precizează că datele se resetează** la fiecare repornire (H2 în memorie + `data.sql`), deci modificările făcute în test dispar după restart.
+6. **Ce să captureze** (📸) pentru documentație: pagina în starea inițială, un caz de eroare și un caz de succes.
+7. **Oprirea aplicației**: ⏹ Stop în IntelliJ sau Ctrl+C în terminal.
+
+Dacă poți porni tu aplicația, verifică scenariile (ex. cu `curl`) înainte să-i dai ghidul și oprește apoi aplicația, ca portul 8080 să rămână liber.
 
 Dacă task-ul cerut depinde de ceva ce nu există încă (ex. o entitate), spune-o și fă doar minimul necesar.
 
 ---
 
 ## 6. Backlog
+
+> ⚠️ **Atenție – pentru toate task-urile [UI] (lăsat de Ana, US-3):**
+> - Există deja **layoutul comun** `templates/fragments/layout.html` (fragmentele `head('Titlu')`, `navbar`, `footer`) și **tema** `static/css/style.css` (variabile `--lt-*`, clase `lt-card`, `btn-lt-primary`, `btn-lt-outline`, `lt-gradient-text`, `lt-muted`). Orice pagină nouă le folosește – vezi `templates/profile.html` ca exemplu. Link-urile noi se adaugă în navbar-ul comun.
+> - Datele de test se adaugă în `data.sql` existent (nu se creează alt fișier). Tabelele se creează din entități (`ddl-auto=create-drop`), iar `data.sql` rulează după aceea.
 
 ### SPRINT 1 – Conturi
 
@@ -143,6 +165,13 @@ Criterii de acceptare:
 - **T-1.3 [REFACTOR]** – regex-uri și limite în constante, mesaje de eroare centralizate
 - **T-1.4 [UI]** – formular de înregistrare + controller + salvare User
 
+> ⚠️ **Atenție (lăsat de Ana, US-3):**
+> - Entitatea `model/User.java` **există deja** (tabela `users`, câmpuri `lastName`, `firstName`, `email`, `phone`, `birthDate`). **Complet-o** cu ce mai trebuie (ex. `password`), nu crea altă clasă și nu redenumi câmpurile existente – le folosesc `ProfileService` și pagina de profil.
+> - `repository/UserRepository.java` există deja și are `findAllEmails()` – folosește-l pentru verificarea că emailul nu există deja.
+> - Formatul telefonului e același ca în profil: `07\d{8}`, cu mesajul „Phone number must have the format 07xxxxxxxx”.
+> - Dacă adaugi coloane obligatorii (ex. `password`), actualizează și utilizatorii demo din `data.sql`, altfel aplicația nu mai pornește.
+> - Pagina de înregistrare folosește layoutul comun (`fragments/layout.html`) și `style.css`.
+
 #### US-2 Autentificare — responsabil **B**
 Ca utilizator înregistrat, vreau să mă autentific cu email și parolă, pentru a avea acces la contul meu.
 Criterii de acceptare:
@@ -157,7 +186,13 @@ Criterii de acceptare:
 - **T-2.3 [REFACTOR]** – constante (3 încercări, 15 minute), curățare cod
 - **T-2.4 [UI]** – pagina de login + logout (sesiune HTTP simplă)
 
-#### US-3 Pagina de profil — responsabil **C**
+> ⚠️ **Atenție (lăsat de Ana, US-3):**
+> - Utilizatorul logat se ține în sesiune cu cheia `ProfileController.SESSION_USER_ID` (`"userId"`). La login: `session.setAttribute(ProfileController.SESSION_USER_ID, user.getId())`; la logout: `session.invalidate()`.
+> - Până la login, `ProfileController` folosește **temporar** utilizatorul demo cu id 1 (`DEMO_USER_ID`). După ce login-ul funcționează, **șterge acest fallback** din `getCurrentUser(...)` și redirecționează spre pagina de login dacă nu e nimeni logat.
+> - Adaugă link-urile „Login” / „Logout” în navbar-ul din `fragments/layout.html` (nu face alt navbar). Pagina de login folosește layoutul comun și `style.css`.
+> - Utilizatorii demo din `data.sql` vor avea nevoie de parolă (vezi US-1).
+
+#### US-3 Pagina de profil — responsabil **C** ✅ implementat (T-3.1, T-3.2, T-3.3)
 Ca utilizator autentificat, vreau să îmi văd și să îmi modific datele personale.
 Criterii de acceptare:
 1. Se afișează nume, email, telefon, data nașterii.
@@ -206,8 +241,8 @@ Criterii de acceptare:
 5. Se afișează prețul inițial, reducerea aplicată și prețul final.
 
 - **T-6.1 [RED]** – teste `PriceCalculatorTest`
-- **T-6.2 [GREEN]** – implementare `PriceCalculator.calculeaza(pretBaza, categorie, zileInainte)`
-- **T-6.3 [REFACTOR]** – procentele mutate în enum-ul `Categorie`, constante pentru early bird
+- **T-6.2 [GREEN]** – implementare `PriceCalculator.calculate(basePrice, category, daysBefore)`
+- **T-6.3 [REFACTOR]** – procentele mutate în enum-ul `Category`, constante pentru early bird
 - **T-6.4 [UI]** – afișare preț inițial / reducere / preț final pe pagina evenimentului
 
 ### SPRINT 3 – Cumpărare bilete
@@ -223,7 +258,7 @@ Criterii de acceptare:
 
 - **T-7.1 [RED]** – teste `SeatReservationServiceTest`
 - **T-7.2 [GREEN]** – implementare `SeatReservationService`
-- **T-7.3 [REFACTOR]** – enum pentru starea locului (LIBER / BLOCAT / VANDUT), constantă 10 minute, excepție proprie
+- **T-7.3 [REFACTOR]** – enum pentru starea locului (`AVAILABLE` / `LOCKED` / `SOLD`), constantă 10 minute, excepție proprie
 - **T-7.4 [UI]** – harta sălii (grilă de locuri colorate) + selectare
 
 #### US-8 Limite de cumpărare — responsabil **B**
