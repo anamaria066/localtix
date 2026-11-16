@@ -103,6 +103,11 @@ Toată aplicația are **aceeași temă**: **dark mode**, modernă, cu accente de
 
 ## 5. Reguli TDD – OBLIGATORII
 
+### 📸 Fiecare user story are OBLIGATORIU 3 capturi: RED, GREEN, REFACTOR
+- **Fiecare user story** trece prin **toate cele trei faze TDD**, în ordinea **[RED] → [GREEN] → [REFACTOR]**, și pentru fiecare fază utilizatorul face o **captură de ecran** (testele roșii; testele verzi; codul refactorizat cu testele verzi). Task-ul [UI] vine după aceste trei faze.
+- Dacă un story din backlog nu are una dintre faze, **adaug-o** în backlog înainte de a începe și spune-i utilizatorului.
+- La sfârșitul fiecărei faze amintește-i utilizatorului ce captură trebuie să facă.
+
 După fiecare fază, utilizatorul face o **captură de ecran**. De aceea, **după fiecare fază te OPREȘTI** și aștepți confirmarea. Nu trece niciodată singur la faza următoare.
 
 ### [RED]
@@ -120,7 +125,9 @@ După fiecare fază, utilizatorul face o **captură de ecran**. De aceea, **dup�
 ### [REFACTOR]
 1. Îmbunătățește codul **fără să-i schimbi comportamentul**: constante în loc de numere „magice”, enum-uri, metode extrase, excepții proprii, nume mai clare.
 2. Nu adăuga funcționalitate nouă. Testele trebuie să rămână verzi.
-3. **STOP:** „📸 Rulează testele și fă captura cu codul refactorizat și testele VERZI.”
+3. Testele **nu se modifică** la REFACTOR (dacă o îmbunătățire ar cere schimbarea testelor, nu o face sau întreabă).
+4. Spune pe scurt ce s-a îmbunătățit față de GREEN (înainte / după).
+5. **STOP:** „📸 Rulează testele și fă captura cu codul refactorizat și testele VERZI.”
 
 ### [UI] și alte task-uri fără teste
 Construiește pagina Thymeleaf și controllerul, folosind serviciile deja implementate. La final spune la ce URL se vede pagina (`http://localhost:8080/...`) și explică utilizatorului cum să verifice pagina în browser (vezi mai jos). **STOP** la finalul task-ului.
@@ -192,7 +199,7 @@ Criterii de acceptare:
 > - Adaugă link-urile „Login” / „Logout” în navbar-ul din `fragments/layout.html` (nu face alt navbar). Pagina de login folosește layoutul comun și `style.css`.
 > - Utilizatorii demo din `data.sql` vor avea nevoie de parolă (vezi US-1).
 
-#### US-3 Pagina de profil — responsabil **C** ✅ implementat (T-3.1, T-3.2, T-3.3)
+#### US-3 Pagina de profil — responsabil **C** ✅ implementat (T-3.1 – T-3.4)
 Ca utilizator autentificat, vreau să îmi văd și să îmi modific datele personale.
 Criterii de acceptare:
 1. Se afișează nume, email, telefon, data nașterii.
@@ -204,6 +211,7 @@ Criterii de acceptare:
 - **T-3.1 [RED]** – teste `ProfileServiceTest`
 - **T-3.2 [GREEN]** – implementare `ProfileService`
 - **T-3.3 [UI]** – pagina de profil (vizualizare + editare)
+- **T-3.4 [REFACTOR]** – regex și mesaje în constante, metode extrase `validateEmail` / `validatePhone` (făcut după UI)
 
 ### SPRINT 2 – Catalog evenimente
 
@@ -215,8 +223,11 @@ Criterii de acceptare:
 3. Evenimentele trecute nu apar.
 4. Click pe un eveniment deschide pagina de detalii cu descrierea completă.
 
-- **T-4.1 [GREEN]** – entități Event și Seat + repository-uri + `data.sql` cu evenimente de test
-- **T-4.2 [UI]** – pagina catalog + pagina de detalii eveniment
+- **T-4.1 [SETUP]** – entități Event și Seat + repository-uri + evenimente de test în `data.sql`
+- **T-4.2 [RED]** – teste `EventCatalogServiceTest` (doar evenimentele viitoare, sortate după dată, număr de locuri disponibile; ora curentă primită ca parametru `now`)
+- **T-4.3 [GREEN]** – implementare `EventCatalogService`
+- **T-4.4 [REFACTOR]** – metode extrase, nume mai clare, curățare cod
+- **T-4.5 [UI]** – pagina catalog + pagina de detalii eveniment
 
 #### US-5 Filtrare evenimente — responsabil **B**
 Ca vizitator, vreau să filtrez evenimentele după categorie, oraș, dată și preț.
@@ -229,7 +240,8 @@ Criterii de acceptare:
 
 - **T-5.1 [RED]** – teste `EventFilterServiceTest`
 - **T-5.2 [GREEN]** – implementare `EventFilterService`
-- **T-5.3 [UI]** – formular de filtre pe pagina catalog
+- **T-5.3 [REFACTOR]** – fiecare filtru într-o metodă separată, constante, curățare cod
+- **T-5.4 [UI]** – formular de filtre pe pagina catalog
 
 #### US-6 Calcul preț bilet — responsabil **A**
 Ca client, vreau să văd prețul corect al biletului în funcție de categoria mea și de momentul cumpărării.
@@ -281,8 +293,10 @@ Criterii de acceptare:
 3. Se afișează timpul rămas din cele 10 minute de rezervare.
 4. Butonul „Checkout” duce la pagina de plată.
 
-- **T-9.1 [GREEN]** – coș în sesiune + calculul totalului folosind `PriceCalculator`
-- **T-9.2 [UI]** – pagina coș + cronometru de 10 minute (JS)
+- **T-9.1 [RED]** – teste `CartServiceTest` (adăugare/ștergere bilet, totalul cu prețurile din `PriceCalculator`, timpul rămas din cele 10 minute; ora curentă primită ca parametru `now`)
+- **T-9.2 [GREEN]** – implementare `CartService` (coș ținut în sesiune)
+- **T-9.3 [REFACTOR]** – constantă 10 minute, metode extrase, curățare cod
+- **T-9.4 [UI]** – pagina coș + cronometru de 10 minute (JS)
 
 ### SPRINT 4 – Plată și bilete
 
@@ -310,7 +324,8 @@ Criterii de acceptare:
 
 - **T-11.1 [RED]** – teste `PaymentServiceTest`
 - **T-11.2 [GREEN]** – implementare `PaymentService` + schimbarea statusului comenzii și al locurilor
-- **T-11.3 [UI]** – pagina de plată
+- **T-11.3 [REFACTOR]** – algoritmul Luhn într-o metodă separată, constante (16 cifre, 3 cifre CVV), enum pentru statusul comenzii
+- **T-11.4 [UI]** – pagina de plată
 
 #### US-12 Bilet electronic — responsabil **B**
 Ca client, vreau să primesc în cont un bilet electronic cu cod unic.
@@ -320,8 +335,10 @@ Criterii de acceptare:
 3. Biletele apar în contul clientului, în secțiunea „My Tickets”.
 4. Biletele anulate apar marcate „Cancelled”.
 
-- **T-12.1 [GREEN]** – generare cod unic + entitatea Ticket
-- **T-12.2 [UI]** – pagina „My Tickets”
+- **T-12.1 [RED]** – teste `TicketServiceTest` (format cod `LTX-AAAA-XXXXXX`, coduri unice, bilet anulat marcat „Cancelled”)
+- **T-12.2 [GREEN]** – implementare `TicketService` + entitatea Ticket
+- **T-12.3 [REFACTOR]** – prefixul și lungimea codului în constante, enum pentru statusul biletului, metode extrase
+- **T-12.4 [UI]** – pagina „My Tickets”
 
 ---
 
