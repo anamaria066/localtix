@@ -280,7 +280,11 @@ Criterii de acceptare:
 > - Formularul de filtre se adaugă pe pagina catalog existentă (`templates/events.html`), nu pe o pagină separată. Pagina primește deja `events` (lista) și `seatCounts` (Map) din `EventCatalogController`.
 > - `EventCatalogController` va trebui extins (sau înlocuit) ca să accepte și parametrii de filtrare și să apeleze `EventFilterService`.
 
-#### US-6 Calcul preț bilet — responsabil **A**
+> ⚠️ **Atenție (lăsat de David, US-6) — pentru US-5:**
+> - `EventCatalogController` conține acum și logica de afișare a prețurilor pe `/events/{id}` (metoda `addPrices`, record-ul `TicketPrice`, câmpul `priceCalculator`). Când extinzi controllerul pentru filtre, **nu șterge** aceste părți – modifică doar `showCatalog` (`/events`).
+> - Filtrul de preț (CA3) se aplică pe `Event.basePrice` (prețul de bază, fără reduceri) – așa apare și „Starting price” în catalog.
+
+#### US-6 Calcul preț bilet — responsabil **A** ✅ implementat (T-6.1 – T-6.4)
 Ca client, vreau să văd prețul corect al biletului în funcție de categoria mea și de momentul cumpărării.
 Criterii de acceptare:
 1. Categorii: normal (preț întreg), student (−30%), pensionar (−40%).
@@ -294,10 +298,23 @@ Criterii de acceptare:
 - **T-6.3 [REFACTOR]** – procentele mutate în enum-ul `Category`, constante pentru early bird
 - **T-6.4 [UI]** – afișare preț inițial / reducere / preț final pe pagina evenimentului
 
+> ✅ Nota de mai jos a fost rezolvată la US-6 (enum-ul se numește `TicketCategory`, prețurile sunt pe `/events/{id}`).
+>
 > ⚠️ **Atenție (lăsat de Ana, US-4):**
 > - **`EventCategory`** (CONCERT / STANDUP / THEATRE) este tipul evenimentului și există deja — **nu** e enum-ul de prețuri. Enum-ul de prețuri pe care îl creezi tu (NORMAL / STUDENT / SENIOR) trebuie să aibă un alt nume (ex. `TicketCategory`) ca să nu intre în conflict.
 > - **`Event.basePrice`** (BigDecimal) există deja — acesta e parametrul `basePrice` din `PriceCalculator.calculate(...)`.
 > - Pagina de detalii eveniment există la `/events/{id}` (`templates/event-detail.html`) — la T-6.4 [UI] adaugi prețul calculat pe această pagină, nu creezi alta.
+
+> ⚠️ **Atenție (lăsat de David, US-6) — ce există acum, pentru toată echipa:**
+> - **`model/TicketCategory`** = categoria de preț a clientului: `NORMAL("Normal", 0)`, `STUDENT("Student", 30)`, `SENIOR("Senior", 40)`, cu `getDisplayName()` și `getDiscountPercent()`. **Nu e același lucru cu `EventCategory`** (tipul evenimentului). Procentele se schimbă doar aici.
+> - **`service/PriceCalculator`** (Java simplu, fără Spring – se creează cu `new PriceCalculator()`):
+>   - `calculate(BigDecimal basePrice, TicketCategory category, long daysBefore)` → prețul final (BigDecimal, 2 zecimale, `HALF_UP`); preț de bază negativ → `IllegalArgumentException("Base price cannot be negative")`.
+>   - `getDiscountPercent(category, daysBefore)` → reducerea aplicată în procente (doar cea mai mare – reducerile **nu** se cumulează).
+>   - Constante publice: `EARLY_BIRD_MIN_DAYS = 14` (early bird doar la **mai mult** de 14 zile), `EARLY_BIRD_DISCOUNT_PERCENT = 20`, `NEGATIVE_BASE_PRICE`.
+> - **`daysBefore`** se calculează în controller: `ChronoUnit.DAYS.between(LocalDateTime.now(), event.getDateTime())` (zile întregi). În servicii nu folosiți `now()` – primiți `now` sau `daysBefore` ca parametru.
+> - **Pagina `/events/{id}`** are acum cardul „Ticket prices” (tabel: categorie / preț inițial / reducere / preț final + alertă „Early bird offer!”). Datele vin din `EventCatalogController.showEventDetail` → metoda privată `addPrices(...)`, care pune în model `prices` (listă de `EventCatalogController.TicketPrice` – record; în Thymeleaf se accesează cu paranteze, ex. `${price.finalPrice()}`), `earlyBird`, `earlyBirdPercent`, `earlyBirdDays`. **Dacă modificați controllerul, păstrați apelul `addPrices(event, model)`**, altfel pagina de detalii nu mai pornește.
+> - CSS nou în `style.css`: `lt-table` (tabel pe fundal dark), `lt-badge-discount` (badge mov), `lt-final-price`.
+> - Testele: `PriceCalculatorTest` (15 teste, toate verzi).
 
 ### SPRINT 3 – Cumpărare bilete
 
@@ -350,6 +367,12 @@ Criterii de acceptare:
 - **T-9.2 [GREEN]** – implementare `CartService` (coș ținut în sesiune)
 - **T-9.3 [REFACTOR]** – constantă 10 minute, metode extrase, curățare cod
 - **T-9.4 [UI]** – pagina coș + cronometru de 10 minute (JS)
+
+> ⚠️ **Atenție (lăsat de David, US-6) — pentru US-9:**
+> - Prețul fiecărui bilet din coș se calculează cu **`PriceCalculator.calculate(event.getBasePrice(), ticketCategory, daysBefore)`** – nu rescrie regulile de reducere în `CartService`. Categoria biletului e enum-ul **`TicketCategory`** (NORMAL / STUDENT / SENIOR), afișat cu `getDisplayName()`.
+> - În `CartService` primește `now` ca parametru și calculează `daysBefore` din `now` și `event.getDateTime()` (ca în `EventCatalogController.addPrices`), ca să fie testabil.
+> - Totalul coșului = suma prețurilor finale (deja rotunjite la 2 zecimale) – folosește `BigDecimal`, nu `double`.
+> - Pe pagina coșului poți refolosi stilul tabelului de prețuri: clasele `lt-table`, `lt-badge-discount`, `lt-final-price` din `style.css`.
 
 ### SPRINT 4 – Plată și bilete
 

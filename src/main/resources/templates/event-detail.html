@@ -53,11 +53,57 @@
         </div>
 
         <!-- Description -->
-        <div class="col-lg-8">
-            <div class="lt-card p-4 h-100">
+        <div class="col-lg-8 d-flex flex-column gap-4">
+            <div class="lt-card p-4">
                 <h2 class="h5 mb-4">About this event</h2>
-                <p class="lt-muted" style="line-height: 1.8;" th:text="${event.description}">
+                <p class="lt-muted mb-0" style="line-height: 1.8;" th:text="${event.description}">
                     Event description goes here.
+                </p>
+            </div>
+
+            <!-- Ticket prices (US-6) -->
+            <div class="lt-card p-4">
+                <h2 class="h5 mb-3">Ticket prices</h2>
+
+                <div class="alert alert-success py-2" th:if="${earlyBird}">
+                    <strong>Early bird offer!</strong>
+                    <span th:text="'Buying more than ' + ${earlyBirdDays} + ' days before the event gives you '
+                                   + ${earlyBirdPercent} + '% off.'">
+                        Buying more than 14 days before the event gives you 20% off.
+                    </span>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table lt-table align-middle mb-0">
+                        <thead>
+                        <tr>
+                            <th>Category</th>
+                            <th class="text-end">Original price</th>
+                            <th class="text-center">Discount</th>
+                            <th class="text-end">Final price</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="price : ${prices}">
+                            <td class="fw-semibold" th:text="${price.category()}">Student</td>
+                            <td class="text-end lt-muted"
+                                th:classappend="${price.discountPercent() > 0 ? 'text-decoration-line-through' : ''}"
+                                th:text="${#numbers.formatDecimal(price.originalPrice(), 1, 2) + ' RON'}">100.00 RON</td>
+                            <td class="text-center">
+                                <span th:if="${price.discountPercent() > 0}"
+                                      class="badge lt-badge lt-badge-discount"
+                                      th:text="'-' + ${price.discountPercent()} + '%'">-30%</span>
+                                <div class="small lt-muted" th:text="${price.discountReason()}">Student discount</div>
+                            </td>
+                            <td class="text-end fw-bold lt-final-price"
+                                th:text="${#numbers.formatDecimal(price.finalPrice(), 1, 2) + ' RON'}">70.00 RON</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <p class="small lt-muted mt-3 mb-0">
+                    Discounts do not add up &ndash; only the biggest one is applied.
                 </p>
             </div>
         </div>

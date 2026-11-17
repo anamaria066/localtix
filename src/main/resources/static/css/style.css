@@ -203,6 +203,25 @@ main {
 .lt-badge-standup  { background-color: var(--lt-purple); }
 .lt-badge-theatre  { background-color: var(--lt-success); }
 
+/* Price table (US-6) */
+.lt-table {
+    --bs-table-bg: transparent;
+    --bs-table-border-color: var(--lt-border);
+    --bs-table-color: var(--lt-text);
+}
+
+.lt-table thead th {
+    color: var(--lt-text-muted);
+    font-weight: 500;
+    font-size: 0.85rem;
+}
+
+.lt-badge-discount { background-color: var(--lt-purple); }
+
+.lt-final-price {
+    font-size: 1.1rem;
+}
+
 /* Footer */
 .lt-footer {
     border-top: 1px solid var(--lt-border);
