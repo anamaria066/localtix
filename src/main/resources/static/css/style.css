@@ -190,6 +190,19 @@ main {
     word-break: break-all;
 }
 
+/* Event category badges */
+.lt-badge {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.35em 0.75em;
+    border-radius: 999px;
+    color: #fff;
+}
+
+.lt-badge-concert  { background-color: var(--lt-blue); }
+.lt-badge-standup  { background-color: var(--lt-purple); }
+.lt-badge-theatre  { background-color: var(--lt-success); }
+
 /* Footer */
 .lt-footer {
     border-top: 1px solid var(--lt-border);

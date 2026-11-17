@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Events')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+
+<main class="container py-5">
+    <h1 class="fw-bold lt-gradient-text mb-1">Upcoming Events</h1>
+    <p class="lt-muted mb-5">Concerts, stand-up and theatre near you.</p>
+
+    <div th:if="${events.isEmpty()}" class="text-center py-5">
+        <p class="lt-muted fs-5">No upcoming events at the moment. Check back soon!</p>
+    </div>
+
+    <div class="row g-4" th:unless="${events.isEmpty()}">
+        <div class="col-sm-6 col-lg-4" th:each="event : ${events}">
+            <div class="lt-card p-4 h-100 d-flex flex-column">
+
+                <div class="mb-3">
+                    <span class="badge lt-badge"
+                          th:classappend="${event.category.badgeClass}"
+                          th:text="${event.category.displayName}">Concert</span>
+                </div>
+
+                <h2 class="h5 fw-bold mb-1" th:text="${event.title}">Event Title</h2>
+                <p class="lt-muted small mb-3"
+                   th:text="${event.city + ' · ' + event.location}">București · Sala Palatului</p>
+
+                <div class="mb-3 small">
+                    <div class="lt-muted">Date &amp; time</div>
+                    <div th:text="${#temporals.format(event.dateTime, 'dd MMM yyyy, HH:mm')}">15 Dec 2026, 20:00</div>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-end mt-auto pt-3"
+                     style="border-top: 1px solid var(--lt-border);">
+                    <div>
+                        <div class="lt-muted small">From</div>
+                        <div class="fw-bold"
+                             th:text="${#numbers.formatDecimal(event.basePrice, 1, 2) + ' RON'}">150.00 RON</div>
+                        <div class="small mt-1"
+                             th:classappend="${seatCounts[event.id] == 0 ? 'text-danger' : 'text-success'}"
+                             th:text="${seatCounts[event.id] == 0 ? 'Sold out' : seatCounts[event.id] + ' seats available'}">
+                            8 seats available
+                        </div>
+                    </div>
+                    <a th:href="@{/events/{id}(id=${event.id})}"
+                       class="btn btn-lt-outline btn-sm">View Details</a>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -19,6 +19,9 @@
     <div class="container">
         <a class="navbar-brand lt-brand lt-gradient-text" th:href="@{/}">LocalTix</a>
         <ul class="navbar-nav flex-row gap-3">
+            <li class="nav-item">
+                <a class="nav-link" th:href="@{/events}">Events</a>
+            </li>
             <!-- Logged in: the session holds "userId" (ProfileController.SESSION_USER_ID) -->
             <li class="nav-item" th:if="${session.userId != null}">
                 <a class="nav-link" th:href="@{/profile}">My Profile</a>

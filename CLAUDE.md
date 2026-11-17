@@ -223,7 +223,7 @@ Criterii de acceptare:
 
 ### SPRINT 2 – Catalog evenimente
 
-#### US-4 Listă de evenimente — responsabil **C**
+#### US-4 Listă de evenimente — responsabil **C** ✅ implementat (T-4.1 – T-4.5)
 Ca vizitator, vreau să văd lista evenimentelor disponibile, pentru a alege la ce eveniment să merg.
 Criterii de acceptare:
 1. Pentru fiecare eveniment: titlu, categorie (concert / stand-up / teatru), oraș, locație, dată și oră, preț de pornire, locuri disponibile.
@@ -236,6 +236,31 @@ Criterii de acceptare:
 - **T-4.3 [GREEN]** – implementare `EventCatalogService`
 - **T-4.4 [REFACTOR]** – metode extrase, nume mai clare, curățare cod
 - **T-4.5 [UI]** – pagina catalog + pagina de detalii eveniment
+
+> ℹ️ **Cum verifici datele din baza de date (H2 Console) — pas cu pas:**
+> 1. Pornește aplicația (▶️ în IntelliJ sau `./mvnw spring-boot:run`)
+> 2. Deschide `http://localhost:8080/h2-console` în browser
+> 3. Setează: **JDBC URL** = `jdbc:h2:mem:localtix` · **User Name** = `sa` · **Password** = *(gol)* → click **Connect**
+> 4. Query-uri utile:
+>    ```sql
+>    -- Toți utilizatorii (email + parolă demo: Parola123!)
+>    SELECT id, first_name, last_name, email FROM users;
+>    -- Toate evenimentele, sortate după dată
+>    SELECT id, title, category, city, date_time, base_price FROM events ORDER BY date_time;
+>    -- Locuri disponibile per eveniment
+>    SELECT event_id, status, COUNT(*) AS count FROM seats GROUP BY event_id, status ORDER BY event_id;
+>    ```
+> 5. ⚠️ Datele se resetează la fiecare repornire (H2 în memorie + `data.sql`).
+
+> ⚠️ **Atenție (lăsat de Ana, US-4):**
+> - **Entitățile `Event` și `Seat` există deja** în `model/`. Nu le recrea. Câmpurile `Event`: `id`, `title`, `category` (enum `EventCategory`), `city`, `location`, `dateTime`, `basePrice` (BigDecimal), `description`. Câmpurile `Seat`: `id`, `event` (ManyToOne), `rowLabel`, `seatNumber`, `status` (enum `SeatStatus`).
+> - **`EventCategory`** (CONCERT / STANDUP / THEATRE) este tipul evenimentului — are și `getDisplayName()` și `getBadgeClass()` pentru UI. **Nu e același lucru** cu categoria de preț (NORMAL / STUDENT / SENIOR) pe care o creează David la US-6.
+> - **`SeatStatus`** (AVAILABLE / LOCKED / SOLD) există deja în `model/SeatStatus.java`.
+> - **`EventRepository`** și **`SeatRepository`** (cu `findByEventId(Long)`) există în `repository/`.
+> - **`EventCatalogService`** există cu metodele: `getUpcomingEvents(LocalDateTime now)` (filtrează trecute + sortează), `countAvailableSeats(Long eventId)`, `findById(Long id)`.
+> - **Pagina catalog** există la `/events` (`templates/events.html`) și **pagina de detalii** la `/events/{id}` (`templates/event-detail.html`). Linkul „Events" e deja în navbar.
+> - **`data.sql`** are 5 evenimente (4 viitoare, 1 trecut) și 45 de locuri. Poți adăuga sau modifica date de test acolo.
+> - Clasa de test este `EventCatalogServiceTest` (10 teste, toate verzi).
 
 #### US-5 Filtrare evenimente — responsabil **B**
 Ca vizitator, vreau să filtrez evenimentele după categorie, oraș, dată și preț.
@@ -251,6 +276,10 @@ Criterii de acceptare:
 - **T-5.3 [REFACTOR]** – fiecare filtru într-o metodă separată, constante, curățare cod
 - **T-5.4 [UI]** – formular de filtre pe pagina catalog
 
+> ⚠️ **Atenție (lăsat de Ana, US-4) — pentru US-5 [UI]:**
+> - Formularul de filtre se adaugă pe pagina catalog existentă (`templates/events.html`), nu pe o pagină separată. Pagina primește deja `events` (lista) și `seatCounts` (Map) din `EventCatalogController`.
+> - `EventCatalogController` va trebui extins (sau înlocuit) ca să accepte și parametrii de filtrare și să apeleze `EventFilterService`.
+
 #### US-6 Calcul preț bilet — responsabil **A**
 Ca client, vreau să văd prețul corect al biletului în funcție de categoria mea și de momentul cumpărării.
 Criterii de acceptare:
@@ -265,6 +294,11 @@ Criterii de acceptare:
 - **T-6.3 [REFACTOR]** – procentele mutate în enum-ul `Category`, constante pentru early bird
 - **T-6.4 [UI]** – afișare preț inițial / reducere / preț final pe pagina evenimentului
 
+> ⚠️ **Atenție (lăsat de Ana, US-4):**
+> - **`EventCategory`** (CONCERT / STANDUP / THEATRE) este tipul evenimentului și există deja — **nu** e enum-ul de prețuri. Enum-ul de prețuri pe care îl creezi tu (NORMAL / STUDENT / SENIOR) trebuie să aibă un alt nume (ex. `TicketCategory`) ca să nu intre în conflict.
+> - **`Event.basePrice`** (BigDecimal) există deja — acesta e parametrul `basePrice` din `PriceCalculator.calculate(...)`.
+> - Pagina de detalii eveniment există la `/events/{id}` (`templates/event-detail.html`) — la T-6.4 [UI] adaugi prețul calculat pe această pagină, nu creezi alta.
+
 ### SPRINT 3 – Cumpărare bilete
 
 #### US-7 Alegere loc în sală — responsabil **C**
@@ -278,8 +312,14 @@ Criterii de acceptare:
 
 - **T-7.1 [RED]** – teste `SeatReservationServiceTest`
 - **T-7.2 [GREEN]** – implementare `SeatReservationService`
-- **T-7.3 [REFACTOR]** – enum pentru starea locului (`AVAILABLE` / `LOCKED` / `SOLD`), constantă 10 minute, excepție proprie
+- **T-7.3 [REFACTOR]** – constantă 10 minute, excepție proprie *(enum-ul `SeatStatus` există deja, vezi nota de mai jos)*
 - **T-7.4 [UI]** – harta sălii (grilă de locuri colorate) + selectare
+
+> ⚠️ **Atenție (lăsat de Ana, US-4):**
+> - **`SeatStatus`** (AVAILABLE / LOCKED / SOLD) **există deja** în `model/SeatStatus.java` — nu-l recrea.
+> - **`Seat`** există deja în `model/Seat.java` cu câmpurile: `id`, `event` (ManyToOne), `rowLabel`, `seatNumber`, `status` (SeatStatus). Extinde sau modifică ce e necesar fără să strici `countAvailableSeats` din `EventCatalogService`.
+> - **`SeatRepository`** există cu `findByEventId(Long eventId)` — poți adăuga metode noi fără să le ștergi pe cele existente.
+> - Pagina de detalii eveniment (`/events/{id}`) are deja un buton „Get Tickets" (dezactivat când sold-out). La T-7.4 [UI] conectezi acest buton la harta sălii.
 
 #### US-8 Limite de cumpărare — responsabil **B**
 Ca organizator, vreau limite la cumpărarea biletelor, pentru a preveni revânzarea și accesul minorilor la evenimente interzise lor.
@@ -292,6 +332,11 @@ Criterii de acceptare:
 - **T-8.1 [RED]** – teste `PurchaseLimitsTest`
 - **T-8.2 [GREEN]** – implementare `PurchaseLimitsValidator`
 - **T-8.3 [REFACTOR]** – constante, mesaje de eroare, metode extrase
+
+> ⚠️ **Atenție (lăsat de Ana, US-4):**
+> - **`Event`** există deja, dar **nu are câmpul `ageRestriction`** (sau `minAge`). Pentru criteriul 3 (evenimente 18+) va trebui să adaugi acest câmp în `model/Event.java` (ex. `int ageRestriction`, default 0) și să actualizezi `data.sql` cu câteva evenimente 18+ pentru testare — fără să strici evenimentele existente.
+> - **`User.birthDate`** (LocalDate) există deja — îl folosești pentru a calcula vârsta utilizatorului.
+> - **`EventCatalogService.countAvailableSeats`** există — poți folosi rezultatul pentru criteriul 2 (sold-out).
 
 #### US-9 Coș și finalizare comandă — responsabil **A**
 Ca client, vreau să văd biletele alese într-un coș înainte de plată.

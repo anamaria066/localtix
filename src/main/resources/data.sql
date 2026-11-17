@@ -3,3 +3,76 @@ INSERT INTO users (last_name, first_name, email, phone, birth_date, password)
 VALUES ('Popescu', 'Ana', 'ana@localtix.ro', '0712345678', '2003-05-10', 'Parola123!');
 INSERT INTO users (last_name, first_name, email, phone, birth_date, password)
 VALUES ('Ionescu', 'Maria', 'maria@localtix.ro', '0723456789', '2002-11-21', 'Parola123!');
+
+-- Events (id 1-5)
+INSERT INTO events (title, category, city, location, date_time, base_price, description)
+VALUES ('Metrophonic Live', 'CONCERT', 'București', 'Sala Palatului', '2026-12-15 20:00:00', 150.00,
+        'An electrifying rock concert featuring Metrophonic and their latest album. Expect pyrotechnics and an unforgettable night.');
+INSERT INTO events (title, category, city, location, date_time, base_price, description)
+VALUES ('A Night of Laughter', 'STANDUP', 'Cluj-Napoca', 'Casa de Cultură a Studenților', '2026-12-20 19:00:00', 80.00,
+        'Three of Romania''s best stand-up comedians on one stage. An evening full of jokes and good vibes.');
+INSERT INTO events (title, category, city, location, date_time, base_price, description)
+VALUES ('Hamlet', 'THEATRE', 'București', 'Teatrul Național', '2026-11-25 18:00:00', 100.00,
+        'Shakespeare''s timeless tragedy brought to life by an award-winning cast. A must-see for theatre lovers.');
+INSERT INTO events (title, category, city, location, date_time, base_price, description)
+VALUES ('Riverside Tour', 'CONCERT', 'Iași', 'Sala Sporturilor', '2027-01-10 20:00:00', 120.00,
+        'Polish progressive rock legends Riverside bring their world tour to Iași. An unmissable experience.');
+-- Past event (should NOT appear in the upcoming events list)
+INSERT INTO events (title, category, city, location, date_time, base_price, description)
+VALUES ('Retro Night', 'CONCERT', 'București', 'Club A', '2026-10-01 21:00:00', 90.00,
+        'A celebration of 80s and 90s hits. This event is in the past.');
+
+-- Seats for event 1 (Metrophonic Live): rows A and B, 5 seats each; 2 SOLD
+INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (1, 'A', 1, 'AVAILABLE');
+INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (1, 'A', 2, 'AVAILABLE');
+INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (1, 'A', 3, 'SOLD');
+INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (1, 'A', 4, 'AVAILABLE');
+INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (1, 'A', 5, 'AVAILABLE');
+INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (1, 'B', 1, 'AVAILABLE');
+INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (1, 'B', 2, 'SOLD');
+INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (1, 'B', 3, 'AVAILABLE');
+INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (1, 'B', 4, 'AVAILABLE');
+INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (1, 'B', 5, 'AVAILABLE');
+
+-- Seats for event 2 (A Night of Laughter): 3 SOLD
+INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (2, 'A', 1, 'SOLD');
+INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (2, 'A', 2, 'AVAILABLE');
+INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (2, 'A', 3, 'AVAILABLE');
+INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (2, 'A', 4, 'SOLD');
+INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (2, 'A', 5, 'AVAILABLE');
+INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (2, 'B', 1, 'AVAILABLE');
+INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (2, 'B', 2, 'AVAILABLE');
+INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (2, 'B', 3, 'SOLD');
+INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (2, 'B', 4, 'AVAILABLE');
+INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (2, 'B', 5, 'AVAILABLE');
+
+-- Seats for event 3 (Hamlet): 1 LOCKED, 1 SOLD
+INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (3, 'A', 1, 'AVAILABLE');
+INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (3, 'A', 2, 'LOCKED');
+INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (3, 'A', 3, 'AVAILABLE');
+INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (3, 'A', 4, 'AVAILABLE');
+INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (3, 'A', 5, 'SOLD');
+INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (3, 'B', 1, 'AVAILABLE');
+INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (3, 'B', 2, 'AVAILABLE');
+INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (3, 'B', 3, 'AVAILABLE');
+INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (3, 'B', 4, 'AVAILABLE');
+INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (3, 'B', 5, 'AVAILABLE');
+
+-- Seats for event 4 (Riverside Tour): all AVAILABLE
+INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (4, 'A', 1, 'AVAILABLE');
+INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (4, 'A', 2, 'AVAILABLE');
+INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (4, 'A', 3, 'AVAILABLE');
+INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (4, 'A', 4, 'AVAILABLE');
+INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (4, 'A', 5, 'AVAILABLE');
+INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (4, 'B', 1, 'AVAILABLE');
+INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (4, 'B', 2, 'AVAILABLE');
+INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (4, 'B', 3, 'AVAILABLE');
+INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (4, 'B', 4, 'AVAILABLE');
+INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (4, 'B', 5, 'AVAILABLE');
+
+-- Seats for event 5 (Retro Night - past): all SOLD
+INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (5, 'A', 1, 'SOLD');
+INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (5, 'A', 2, 'SOLD');
+INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (5, 'A', 3, 'SOLD');
+INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (5, 'A', 4, 'SOLD');
+INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (5, 'A', 5, 'SOLD');
