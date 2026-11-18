@@ -13,9 +13,14 @@
         <!-- Key info -->
         <div class="col-lg-4">
             <div class="lt-card p-4 h-100">
-                <span class="badge lt-badge mb-3"
-                      th:classappend="${event.category.badgeClass}"
-                      th:text="${event.category.displayName}">Concert</span>
+                <div class="mb-3">
+                    <span class="badge lt-badge"
+                          th:classappend="${event.category.badgeClass}"
+                          th:text="${event.category.displayName}">Concert</span>
+                    <!-- US-8: age-restricted event -->
+                    <span th:if="${event.ageRestriction > 0}" class="badge lt-badge lt-badge-age"
+                          th:text="${event.ageRestriction} + '+'">18+</span>
+                </div>
 
                 <h1 class="h3 fw-bold lt-gradient-text mb-4" th:text="${event.title}">Event Title</h1>
 
@@ -42,11 +47,17 @@
                           th:text="${availableSeats == 0 ? 'Sold out' : availableSeats}">8</span>
                 </div>
 
+                <div class="alert alert-warning small mt-4 mb-0" th:if="${event.ageRestriction > 0}"
+                     th:text="'Adults only: you must be at least ' + ${event.ageRestriction}
+                              + ' years old to buy tickets for this event.'">
+                    Adults only: you must be at least 18 years old to buy tickets for this event.
+                </div>
+
                 <div class="mt-4">
-                    <!-- US-7: opens the seat map -->
-                    <a th:if="${availableSeats > 0}" class="btn btn-lt-primary w-100"
+                    <!-- US-7: opens the seat map; US-8 AC2: inactive when sold out -->
+                    <a th:unless="${soldOut}" class="btn btn-lt-primary w-100"
                        th:href="@{/events/{id}/seats(id=${event.id})}">Get Tickets</a>
-                    <button th:if="${availableSeats == 0}" class="btn btn-lt-primary w-100" disabled>
+                    <button th:if="${soldOut}" class="btn btn-lt-primary w-100" disabled>
                         Sold Out
                     </button>
                 </div>

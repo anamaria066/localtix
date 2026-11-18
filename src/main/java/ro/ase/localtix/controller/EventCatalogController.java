@@ -13,6 +13,7 @@ import ro.ase.localtix.service.EventCatalogService;
 import ro.ase.localtix.service.EventFilter;
 import ro.ase.localtix.service.EventFilterService;
 import ro.ase.localtix.service.PriceCalculator;
+import ro.ase.localtix.service.PurchaseLimitsValidator;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -29,6 +30,7 @@ public class EventCatalogController {
     private final EventCatalogService eventCatalogService;
     private final EventFilterService eventFilterService;
     private final PriceCalculator priceCalculator = new PriceCalculator();
+    private final PurchaseLimitsValidator purchaseLimitsValidator = new PurchaseLimitsValidator();
 
     public EventCatalogController(EventCatalogService eventCatalogService,
                                   EventFilterService eventFilterService) {
@@ -81,9 +83,11 @@ public class EventCatalogController {
     public String showEventDetail(@PathVariable Long id, Model model) {
         return eventCatalogService.findById(id)
                 .map(event -> {
+                    long availableSeats = eventCatalogService.countAvailableSeats(id);
                     model.addAttribute("event", event);
-                    model.addAttribute("availableSeats",
-                            eventCatalogService.countAvailableSeats(id));
+                    model.addAttribute("availableSeats", availableSeats);
+                    // US-8 AC2: the buy button is inactive when the event is sold out
+                    model.addAttribute("soldOut", purchaseLimitsValidator.isSoldOut(availableSeats));
                     addPrices(event, model);
                     return "event-detail";
                 })

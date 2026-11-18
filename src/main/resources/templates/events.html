@@ -85,6 +85,9 @@
                     <span class="badge lt-badge"
                           th:classappend="${event.category.badgeClass}"
                           th:text="${event.category.displayName}">Concert</span>
+                    <!-- US-8: age-restricted event -->
+                    <span th:if="${event.ageRestriction > 0}" class="badge lt-badge lt-badge-age"
+                          th:text="${event.ageRestriction} + '+'">18+</span>
                 </div>
 
                 <h2 class="h5 fw-bold mb-1" th:text="${event.title}">Event Title</h2>

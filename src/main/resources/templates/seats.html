@@ -20,6 +20,15 @@
     <div class="alert alert-info" th:unless="${loggedIn}">
         <a th:href="@{/login}" class="alert-link">Log in</a> to choose your seats.
     </div>
+    <!-- US-8: purchase limits -->
+    <div class="alert alert-warning" th:if="${soldOut}">
+        This event is sold out. No more tickets can be bought.
+    </div>
+    <div class="alert alert-warning" th:if="${adultsOnly}"
+         th:text="'Adults only: you must be at least ' + ${event.ageRestriction}
+                  + ' years old to buy tickets for this event.'">
+        Adults only: you must be at least 18 years old to buy tickets for this event.
+    </div>
 
     <div class="row g-4">
 
@@ -57,7 +66,15 @@
         <!-- My seats -->
         <div class="col-lg-4">
             <div class="lt-card p-4">
-                <h2 class="h5 mb-3">Your seats</h2>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h2 class="h5 mb-0">Your seats</h2>
+                    <span th:if="${loggedIn}" class="badge lt-badge lt-badge-discount"
+                          th:text="${ticketsInCart} + ' / ' + ${maxTickets}">0 / 6</span>
+                </div>
+                <p class="small lt-muted" th:if="${loggedIn}"
+                   th:text="'You can choose at most ' + ${maxTickets} + ' seats per order.'">
+                    You can choose at most 6 seats per order.
+                </p>
 
                 <p class="lt-muted mb-0" th:if="${mySeats.isEmpty()}">
                     Click an available seat to add it to your cart.

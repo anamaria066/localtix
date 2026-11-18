@@ -3,6 +3,9 @@ INSERT INTO users (last_name, first_name, email, phone, birth_date, password)
 VALUES ('Popescu', 'Ana', 'ana@localtix.ro', '0712345678', '2003-05-10', 'Parola123!');
 INSERT INTO users (last_name, first_name, email, phone, birth_date, password)
 VALUES ('Ionescu', 'Maria', 'maria@localtix.ro', '0723456789', '2002-11-21', 'Parola123!');
+-- User 3: a minor (born 2010), used to test 18+ events (US-8)
+INSERT INTO users (last_name, first_name, email, phone, birth_date, password)
+VALUES ('Georgescu', 'Andrei', 'andrei@localtix.ro', '0734567890', '2010-03-15', 'Parola123!');
 
 -- Events (id 1-5)
 INSERT INTO events (title, category, city, location, date_time, base_price, description)
@@ -90,3 +93,20 @@ INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (6, 'A', 2, 
 INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (6, 'A', 3, 'SOLD');
 INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (6, 'A', 4, 'AVAILABLE');
 INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (6, 'A', 5, 'AVAILABLE');
+
+-- Event 7 (US-8): an 18+ event - only adults can buy tickets
+INSERT INTO events (title, category, city, location, date_time, base_price, description, age_restriction)
+VALUES ('Late Night Roast', 'STANDUP', 'București', 'Club Control', '2026-12-12 22:00:00', 70.00,
+        'An uncensored late-night roast with explicit language and adult humour. Adults only (18+).', 18);
+
+-- Seats for event 7 (Late Night Roast): all AVAILABLE
+INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (7, 'A', 1, 'AVAILABLE');
+INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (7, 'A', 2, 'AVAILABLE');
+INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (7, 'A', 3, 'AVAILABLE');
+INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (7, 'A', 4, 'AVAILABLE');
+INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (7, 'A', 5, 'AVAILABLE');
+INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (7, 'B', 1, 'AVAILABLE');
+INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (7, 'B', 2, 'AVAILABLE');
+INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (7, 'B', 3, 'AVAILABLE');
+INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (7, 'B', 4, 'AVAILABLE');
+INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (7, 'B', 5, 'AVAILABLE');

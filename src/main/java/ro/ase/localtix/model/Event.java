@@ -8,6 +8,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import org.hibernate.annotations.ColumnDefault;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -34,6 +35,10 @@ public class Event {
 
     @Column(columnDefinition = "TEXT")
     private String description;
+
+    /** Minimum age to buy tickets (US-8); 0 = no restriction, 18 = adults only. */
+    @ColumnDefault("0") // events from data.sql without this column have no restriction
+    private int ageRestriction;
 
     public Event() {}
 
@@ -71,4 +76,7 @@ public class Event {
 
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
+
+    public int getAgeRestriction() { return ageRestriction; }
+    public void setAgeRestriction(int ageRestriction) { this.ageRestriction = ageRestriction; }
 }

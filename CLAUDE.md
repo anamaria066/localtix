@@ -353,7 +353,7 @@ Criterii de acceptare:
 > - `data.sql`: locul A2 de la Hamlet (event 3) e în coșul Mariei (user 2) 10 minute de la pornirea aplicației, apoi se eliberează.
 > - „Available seats” din catalog / detalii (`countAvailableSeats`) numără doar `AVAILABLE`; blocările expirate devin AVAILABLE în baza de date abia când cineva deschide harta sălii.
 
-#### US-8 Limite de cumpărare — responsabil **B**
+#### US-8 Limite de cumpărare — responsabil **B** ✅ implementat (T-8.1 – T-8.4)
 Ca organizator, vreau limite la cumpărarea biletelor, pentru a preveni revânzarea și accesul minorilor la evenimente interzise lor.
 Criterii de acceptare:
 1. Maximum 6 bilete pe comandă.
@@ -364,6 +364,7 @@ Criterii de acceptare:
 - **T-8.1 [RED]** – teste `PurchaseLimitsTest`
 - **T-8.2 [GREEN]** – implementare `PurchaseLimitsValidator`
 - **T-8.3 [REFACTOR]** – constante, mesaje de eroare, metode extrase
+- **T-8.4 [UI]** – limitele aplicate pe harta sălii (max 6 locuri în coș, 18+, sold-out) + badge „18+” în catalog și pe pagina evenimentului + eveniment 18+ și utilizator minor în `data.sql`
 
 > ⚠️ **Atenție (lăsat de Ana, US-7) — pentru US-8:**
 > - Rezervarea unui loc se face în `SeatMapController.reserveSeat` → `lockSeat(...)`. Limita de 6 bilete (CA1) se poate verifica acolo, înainte de `seatReservationService.reserve(...)`, numărând locurile `LOCKED` cu `lockedByUserId` = clientul curent (vezi `SeatView.mine`). `SeatReservationService` nu are nicio limită de număr.
@@ -372,6 +373,19 @@ Criterii de acceptare:
 > - **`Event`** există deja, dar **nu are câmpul `ageRestriction`** (sau `minAge`). Pentru criteriul 3 (evenimente 18+) va trebui să adaugi acest câmp în `model/Event.java` (ex. `int ageRestriction`, default 0) și să actualizezi `data.sql` cu câteva evenimente 18+ pentru testare — fără să strici evenimentele existente.
 > - **`User.birthDate`** (LocalDate) există deja — îl folosești pentru a calcula vârsta utilizatorului.
 > - **`EventCatalogService.countAvailableSeats`** există — poți folosi rezultatul pentru criteriul 2 (sold-out).
+
+> ⚠️ **Atenție (lăsat de Maria, US-8) — ce există acum, pentru toată echipa:**
+> - **`Event.ageRestriction`** (int, implicit 0 prin `@ColumnDefault("0")`; 18 = doar adulți) cu `getAgeRestriction()` / `setAgeRestriction()`. Evenimentele din `data.sql` nu completează coloana, deci nu au restricție. Pentru un eveniment 18+ adaugă `age_restriction` în `INSERT`.
+> - **`service/PurchaseLimitsValidator`** (Java simplu, `new PurchaseLimitsValidator()`):
+>   - `validateTicketCount(int ticketCount)`: mai mult de `MAX_TICKETS_PER_ORDER = 6` bilete → excepție `TOO_MANY_TICKETS`.
+>   - `isSoldOut(long availableSeats)` și `validateNotSoldOut(long availableSeats)` (`SOLD_OUT`). Numărul de locuri vine din `EventCatalogService.countAvailableSeats`.
+>   - `validateAge(Event event, LocalDate birthDate, LocalDate today)`: vârsta în ani împliniți < `ageRestriction` → `AGE_RESTRICTED` (format `%d`). Ziua curentă se primește ca parametru.
+>   - Toate aruncă **`PurchaseLimitException`** (extinde `IllegalArgumentException`), deci un `catch (IllegalArgumentException e)` existent afișează deja mesajul.
+> - **T-8.4 [UI]**: validatorul e apelat în `SeatMapController.lockSeat`, înainte de `seatReservationService.reserve(...)`: `validateAge`, `validateNotSoldOut` (locuri libere la momentul `now`, blocările expirate contează ca libere) și `validateTicketCount(locurile mele din coș + 1)`. `SeatMapController` are acum în constructor și `UserRepository`. Harta pune în model și `ticketsInCart`, `maxTickets`, `soldOut`, `adultsOnly`.
+> - **Limita de 6 e pe comandă = locurile din coș la un eveniment** (locuri `LOCKED` active cu `lockedByUserId` = clientul). La US-9 / US-11, când există comenzi, `CartService` poate refolosi `validateTicketCount(...)` cu numărul de bilete din coș.
+> - `/events/{id}` pune în model `soldOut` (din `isSoldOut`) – butonul „Get Tickets” / „Sold Out” îl folosește. Catalogul și pagina de detalii afișează badge-ul `lt-badge-age` („18+”) când `ageRestriction > 0`.
+> - `data.sql`: evenimentul 7 **„Late Night Roast”** (STANDUP, București, 18+, 10 locuri) și utilizatorul 3 **Andrei Georgescu** (`andrei@localtix.ro`, născut 2010-03-15, minor, parola `Parola123!`).
+> - Testele: `PurchaseLimitsTest` (12 teste, toate verzi).
 
 #### US-9 Coș și finalizare comandă — responsabil **A**
 Ca client, vreau să văd biletele alese într-un coș înainte de plată.

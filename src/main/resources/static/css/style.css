@@ -180,6 +180,12 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     color: #fecaca;
 }
 
+.alert-warning {
+    background-color: rgba(245, 158, 11, 0.12);
+    border-color: var(--lt-warning);
+    color: #fde68a;
+}
+
 /* Profile page */
 .lt-avatar {
     width: 88px;
@@ -224,6 +230,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .lt-badge-concert  { background-color: var(--lt-blue); }
 .lt-badge-standup  { background-color: var(--lt-purple); }
 .lt-badge-theatre  { background-color: var(--lt-success); }
+.lt-badge-age      { background-color: var(--lt-danger); margin-left: 0.25rem; } /* 18+ events (US-8) */
 
 /* Price table (US-6) */
 .lt-table {

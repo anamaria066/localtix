@@ -11,8 +11,11 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import ro.ase.localtix.model.Event;
 import ro.ase.localtix.model.Seat;
 import ro.ase.localtix.model.SeatStatus;
+import ro.ase.localtix.model.User;
 import ro.ase.localtix.repository.SeatRepository;
+import ro.ase.localtix.repository.UserRepository;
 import ro.ase.localtix.service.EventCatalogService;
+import ro.ase.localtix.service.PurchaseLimitsValidator;
 import ro.ase.localtix.service.SeatReservationService;
 import ro.ase.localtix.service.SeatUnavailableException;
 
@@ -27,6 +30,7 @@ import java.util.stream.Collectors;
 
 /**
  * Seat map of an event (US-7): shows the seats and lets a logged-in customer reserve one.
+ * Before a seat is reserved, the purchase limits are checked (US-8).
  */
 @Controller
 public class SeatMapController {
@@ -36,11 +40,15 @@ public class SeatMapController {
 
     private final EventCatalogService eventCatalogService;
     private final SeatRepository seatRepository;
+    private final UserRepository userRepository;
     private final SeatReservationService seatReservationService = new SeatReservationService();
+    private final PurchaseLimitsValidator purchaseLimitsValidator = new PurchaseLimitsValidator();
 
-    public SeatMapController(EventCatalogService eventCatalogService, SeatRepository seatRepository) {
+    public SeatMapController(EventCatalogService eventCatalogService, SeatRepository seatRepository,
+                             UserRepository userRepository) {
         this.eventCatalogService = eventCatalogService;
         this.seatRepository = seatRepository;
+        this.userRepository = userRepository;
     }
 
     @GetMapping("/events/{id}/seats")
@@ -60,11 +68,18 @@ public class SeatMapController {
         Map<String, List<SeatView>> rows = seatViews.stream()
                 .collect(Collectors.groupingBy(SeatView::rowLabel, LinkedHashMap::new, Collectors.toList()));
 
+        List<SeatView> mySeats = seatViews.stream().filter(SeatView::mine).toList();
+
         model.addAttribute("event", event.get());
         model.addAttribute("rows", rows);
-        model.addAttribute("mySeats", seatViews.stream().filter(SeatView::mine).toList());
+        model.addAttribute("mySeats", mySeats);
         model.addAttribute("loggedIn", userId != null);
         model.addAttribute("lockMinutes", SeatReservationService.LOCK_DURATION_MINUTES);
+        // US-8: purchase limits shown on the page
+        model.addAttribute("ticketsInCart", mySeats.size());
+        model.addAttribute("maxTickets", PurchaseLimitsValidator.MAX_TICKETS_PER_ORDER);
+        model.addAttribute("soldOut", purchaseLimitsValidator.isSoldOut(countAvailable(seats, now)));
+        model.addAttribute("adultsOnly", event.get().getAgeRestriction() > 0);
         return "seats";
     }
 
@@ -93,11 +108,50 @@ public class SeatMapController {
      * one after the other, so only the first one gets it and the second one sees the error (AC5).
      */
     private synchronized Seat lockSeat(Long eventId, Long seatId, Long userId) {
+        LocalDateTime now = LocalDateTime.now();
         Seat seat = seatRepository.findById(seatId)
                 .filter(s -> s.getEvent().getId().equals(eventId))
                 .orElseThrow(() -> new SeatUnavailableException(SEAT_NOT_FOUND));
-        seatReservationService.reserve(seat, userId, LocalDateTime.now());
+        checkPurchaseLimits(eventId, userId, now);
+        seatReservationService.reserve(seat, userId, now);
         return seatRepository.save(seat);
+    }
+
+    /**
+     * US-8: the customer must be old enough (18+ events), the event must not be sold out
+     * and the order can have at most 6 tickets (the seats already in the cart + this one).
+     * Each check throws a PurchaseLimitException whose message is shown on the seat map.
+     */
+    private void checkPurchaseLimits(Long eventId, Long userId, LocalDateTime now) {
+        Event event = eventCatalogService.findById(eventId)
+                .orElseThrow(() -> new SeatUnavailableException(SEAT_NOT_FOUND));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException(LOGIN_REQUIRED));
+        List<Seat> seats = seatRepository.findByEventId(eventId);
+
+        purchaseLimitsValidator.validateAge(event, user.getBirthDate(), now.toLocalDate());
+        purchaseLimitsValidator.validateNotSoldOut(countAvailable(seats, now));
+        purchaseLimitsValidator.validateTicketCount(countInCart(seats, userId, now) + 1);
+    }
+
+    /** Seats that can still be bought at the moment "now" (an expired lock counts as available). */
+    private long countAvailable(List<Seat> seats, LocalDateTime now) {
+        return seats.stream()
+                .filter(seat -> seatReservationService.getDisplayStatus(seat, now) == SeatStatus.AVAILABLE)
+                .count();
+    }
+
+    /** Seats that are in this customer's cart right now. */
+    private int countInCart(List<Seat> seats, Long userId, LocalDateTime now) {
+        return (int) seats.stream()
+                .filter(seat -> isInCart(seat, userId, now))
+                .count();
+    }
+
+    private boolean isInCart(Seat seat, Long userId, LocalDateTime now) {
+        return userId != null
+                && seatReservationService.getDisplayStatus(seat, now) == SeatStatus.LOCKED
+                && Objects.equals(seat.getLockedByUserId(), userId);
     }
 
     /** AC4: seats not paid within 10 minutes are freed before the map is shown. */
@@ -109,8 +163,7 @@ public class SeatMapController {
 
     private SeatView toView(Seat seat, Long userId, LocalDateTime now) {
         SeatStatus status = seatReservationService.getDisplayStatus(seat, now);
-        boolean mine = status == SeatStatus.LOCKED && userId != null
-                && Objects.equals(seat.getLockedByUserId(), userId);
+        boolean mine = isInCart(seat, userId, now);
         String cssClass = mine ? "lt-seat-selected" : "lt-seat-" + status.name().toLowerCase();
         return new SeatView(seat.getId(), seat.getRowLabel(), seat.getSeatNumber(), label(seat),
                 cssClass, tooltip(status, mine), status == SeatStatus.AVAILABLE, mine,
