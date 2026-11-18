@@ -43,10 +43,11 @@
                 </div>
 
                 <div class="mt-4">
-                    <button class="btn btn-lt-primary w-100"
-                            th:disabled="${availableSeats == 0}"
-                            th:text="${availableSeats == 0 ? 'Sold Out' : 'Get Tickets'}">
-                        Get Tickets
+                    <!-- US-7: opens the seat map -->
+                    <a th:if="${availableSeats > 0}" class="btn btn-lt-primary w-100"
+                       th:href="@{/events/{id}/seats(id=${event.id})}">Get Tickets</a>
+                    <button th:if="${availableSeats == 0}" class="btn btn-lt-primary w-100" disabled>
+                        Sold Out
                     </button>
                 </div>
             </div>

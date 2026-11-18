@@ -326,7 +326,7 @@ Criterii de acceptare:
 
 ### SPRINT 3 – Cumpărare bilete
 
-#### US-7 Alegere loc în sală — responsabil **C**
+#### US-7 Alegere loc în sală — responsabil **C** ✅ implementat (T-7.1 – T-7.4)
 Ca client, vreau să îmi aleg locul pe harta sălii.
 Criterii de acceptare:
 1. Harta arată locurile libere, ocupate și blocate temporar, în culori diferite.
@@ -346,6 +346,13 @@ Criterii de acceptare:
 > - **`SeatRepository`** există cu `findByEventId(Long eventId)` — poți adăuga metode noi fără să le ștergi pe cele existente.
 > - Pagina de detalii eveniment (`/events/{id}`) are deja un buton „Get Tickets" (dezactivat când sold-out). La T-7.4 [UI] conectezi acest buton la harta sălii.
 
+> ⚠️ **Atenție (lăsat de Ana, US-7) — ce există acum, pentru toată echipa:**
+> - **`Seat`** are două câmpuri noi (nullable): `lockedUntil` (LocalDateTime) și `lockedByUserId` (Long). Un loc **„în coș”** = `status == LOCKED` + `lockedByUserId` = clientul + `lockedUntil` în viitor. Un loc `LOCKED` trebuie să aibă **mereu** `lockedUntil` setat (altfel serviciul dă `NullPointerException`) – inclusiv în `data.sql`.
+> - **`service/SeatReservationService`** (Java simplu, `new SeatReservationService()`): `reserve(seat, userId, now)` (blochează 10 minute; aruncă **`SeatUnavailableException`** – extinde `IllegalArgumentException` – cu `SEAT_SOLD` / `SEAT_LOCKED`), `releaseExpiredLocks(seats, now)` (face AVAILABLE locurile cu blocare expirată), `getDisplayStatus(seat, now)`. Constanta `LOCK_DURATION_MINUTES = 10`.
+> - **Harta sălii**: `/events/{id}/seats` (`SeatMapController`, `templates/seats.html`). GET afișează harta (eliberează întâi blocările expirate); POST cu `seatId` rezervă locul (doar logat; altfel redirect `/login`). Butonul „Get Tickets” de pe `/events/{id}` duce acum aici. CSS nou: `lt-stage`, `lt-seat`, `lt-seat-available/locked/sold/selected`, `lt-seat-legend`.
+> - `data.sql`: locul A2 de la Hamlet (event 3) e în coșul Mariei (user 2) 10 minute de la pornirea aplicației, apoi se eliberează.
+> - „Available seats” din catalog / detalii (`countAvailableSeats`) numără doar `AVAILABLE`; blocările expirate devin AVAILABLE în baza de date abia când cineva deschide harta sălii.
+
 #### US-8 Limite de cumpărare — responsabil **B**
 Ca organizator, vreau limite la cumpărarea biletelor, pentru a preveni revânzarea și accesul minorilor la evenimente interzise lor.
 Criterii de acceptare:
@@ -357,6 +364,9 @@ Criterii de acceptare:
 - **T-8.1 [RED]** – teste `PurchaseLimitsTest`
 - **T-8.2 [GREEN]** – implementare `PurchaseLimitsValidator`
 - **T-8.3 [REFACTOR]** – constante, mesaje de eroare, metode extrase
+
+> ⚠️ **Atenție (lăsat de Ana, US-7) — pentru US-8:**
+> - Rezervarea unui loc se face în `SeatMapController.reserveSeat` → `lockSeat(...)`. Limita de 6 bilete (CA1) se poate verifica acolo, înainte de `seatReservationService.reserve(...)`, numărând locurile `LOCKED` cu `lockedByUserId` = clientul curent (vezi `SeatView.mine`). `SeatReservationService` nu are nicio limită de număr.
 
 > ⚠️ **Atenție (lăsat de Ana, US-4):**
 > - **`Event`** există deja, dar **nu are câmpul `ageRestriction`** (sau `minAge`). Pentru criteriul 3 (evenimente 18+) va trebui să adaugi acest câmp în `model/Event.java` (ex. `int ageRestriction`, default 0) și să actualizezi `data.sql` cu câteva evenimente 18+ pentru testare — fără să strici evenimentele existente.
@@ -382,6 +392,11 @@ Criterii de acceptare:
 > - Totalul coșului = suma prețurilor finale (deja rotunjite la 2 zecimale) – folosește `BigDecimal`, nu `double`.
 > - Pe pagina coșului poți refolosi stilul tabelului de prețuri: clasele `lt-table`, `lt-badge-discount`, `lt-final-price` din `style.css`.
 
+> ⚠️ **Atenție (lăsat de Ana, US-7) — pentru US-9:**
+> - Locurile din coș sunt locurile `LOCKED` cu `Seat.lockedByUserId` = clientul logat (vezi nota de la US-7). Timpul rămas (CA3) = `Seat.lockedUntil` − `now`; durata e `SeatReservationService.LOCK_DURATION_MINUTES` – nu redefini 10 minute în `CartService`.
+> - Pentru ștergerea din coș (CA2) `SeatReservationService` **nu are** încă o metodă publică de eliberare a unui singur loc (are doar `unlock` privat, folosit de `releaseExpiredLocks`) – adaug-o tu (ex. `release(seat)`) cu test, fără să schimbi metodele existente.
+> - Pagina `/events/{id}/seats` are cardul „Your seats” (locurile din coș cu „Reserved until HH:mm”) – acolo se poate pune butonul spre coș.
+
 ### SPRINT 4 – Plată și bilete
 
 #### US-10 Rambursare — responsabil **C**
@@ -397,6 +412,9 @@ Criterii de acceptare:
 - **T-10.2 [GREEN]** – implementare `RefundService`
 - **T-10.3 [REFACTOR]** – constante (48h, 10%), excepție proprie, metode extrase
 
+> ⚠️ **Atenție (lăsat de Ana, US-7) — pentru US-10:**
+> - La anulare (CA5), locul redevine disponibil cu `seat.setStatus(SeatStatus.AVAILABLE)` și trebuie golite și `lockedUntil` / `lockedByUserId` (câmpuri adăugate în `Seat` la US-7), ca harta sălii să-l arate liber.
+
 #### US-11 Plată online (simulată) — responsabil **A**
 Ca client, vreau să plătesc biletele online cu cardul.
 Criterii de acceptare:
@@ -410,6 +428,9 @@ Criterii de acceptare:
 - **T-11.2 [GREEN]** – implementare `PaymentService` + schimbarea statusului comenzii și al locurilor
 - **T-11.3 [REFACTOR]** – algoritmul Luhn într-o metodă separată, constante (16 cifre, 3 cifre CVV), enum pentru statusul comenzii
 - **T-11.4 [UI]** – pagina de plată
+
+> ⚠️ **Atenție (lăsat de Ana, US-7) — pentru US-11:**
+> - La plată reușită (CA4): `seat.setStatus(SeatStatus.SOLD)` și golește `lockedUntil` / `lockedByUserId`. La plată eșuată (CA5) nu atinge locurile – rămân `LOCKED` și se eliberează singure prin `SeatReservationService.releaseExpiredLocks` după 10 minute.
 
 #### US-12 Bilet electronic — responsabil **B**
 Ca client, vreau să primesc în cont un bilet electronic cu cod unic.

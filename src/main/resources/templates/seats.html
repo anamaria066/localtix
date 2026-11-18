@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Choose your seats')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+
+<main class="container py-5">
+
+    <a th:href="@{/events/{id}(id=${event.id})}" class="btn btn-lt-outline btn-sm mb-4">&larr; Back to event</a>
+
+    <h1 class="h3 fw-bold lt-gradient-text mb-1">Choose your seats</h1>
+    <p class="lt-muted mb-4"
+       th:text="${event.title} + ' · ' + ${event.location} + ', ' + ${event.city} + ' · '
+                + ${#temporals.format(event.dateTime, 'dd MMM yyyy, HH:mm')}">
+        Metrophonic Live · Sala Palatului, București · 15 Dec 2026, 20:00
+    </p>
+
+    <div class="alert alert-success" th:if="${successMessage}" th:text="${successMessage}">Seat added.</div>
+    <div class="alert alert-danger" th:if="${errorMessage}" th:text="${errorMessage}">Error.</div>
+    <div class="alert alert-info" th:unless="${loggedIn}">
+        <a th:href="@{/login}" class="alert-link">Log in</a> to choose your seats.
+    </div>
+
+    <div class="row g-4">
+
+        <!-- Seat map -->
+        <div class="col-lg-8">
+            <div class="lt-card lt-filter-card p-4">
+                <div class="lt-stage mb-4">STAGE</div>
+
+                <form method="post" th:action="@{/events/{id}/seats(id=${event.id})}" class="lt-seat-map">
+                    <div class="lt-seat-row" th:each="row : ${rows}">
+                        <span class="lt-row-label" th:text="${row.key}">A</span>
+                        <button type="submit" name="seatId" th:each="seat : ${row.value}"
+                                class="lt-seat" th:classappend="${seat.cssClass()}"
+                                th:value="${seat.id()}"
+                                th:title="${seat.label()} + ' – ' + ${seat.tooltip()}"
+                                th:disabled="${!loggedIn or !seat.selectable()}"
+                                th:text="${seat.number()}">1</button>
+                        <span class="lt-row-label" th:text="${row.key}">A</span>
+                    </div>
+                    <p class="lt-muted text-center mb-0" th:if="${rows.isEmpty()}">
+                        No seats have been set up for this event yet.
+                    </p>
+                </form>
+
+                <!-- Legend -->
+                <div class="d-flex flex-wrap justify-content-center gap-3 mt-4 small lt-muted">
+                    <span><span class="lt-seat-legend lt-seat-available"></span>Available</span>
+                    <span><span class="lt-seat-legend lt-seat-selected"></span>In your cart</span>
+                    <span><span class="lt-seat-legend lt-seat-locked"></span>Reserved by others</span>
+                    <span><span class="lt-seat-legend lt-seat-sold"></span>Sold</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- My seats -->
+        <div class="col-lg-4">
+            <div class="lt-card p-4">
+                <h2 class="h5 mb-3">Your seats</h2>
+
+                <p class="lt-muted mb-0" th:if="${mySeats.isEmpty()}">
+                    Click an available seat to add it to your cart.
+                </p>
+
+                <div th:unless="${mySeats.isEmpty()}">
+                    <div class="lt-detail" th:each="seat : ${mySeats}">
+                        <span class="fw-semibold" th:text="'Seat ' + ${seat.label()}">Seat A1</span>
+                        <span class="lt-muted"
+                              th:text="'Reserved until ' + ${#temporals.format(seat.lockedUntil(), 'HH:mm')}">
+                            Reserved until 12:10
+                        </span>
+                    </div>
+                    <p class="small lt-muted mt-3 mb-0"
+                       th:text="'Seats stay reserved for ' + ${lockMinutes}
+                                + ' minutes. If you do not pay in time, they are released automatically.'">
+                        Seats stay reserved for 10 minutes.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

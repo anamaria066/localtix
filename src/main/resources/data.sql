@@ -48,7 +48,9 @@ INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (2, 'B', 5, 
 
 -- Seats for event 3 (Hamlet): 1 LOCKED, 1 SOLD
 INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (3, 'A', 1, 'AVAILABLE');
-INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (3, 'A', 2, 'LOCKED');
+-- A2 is in Maria's cart (user 2) for 10 minutes from application start (US-7), then it is released
+INSERT INTO seats (event_id, row_label, seat_number, status, locked_until, locked_by_user_id)
+VALUES (3, 'A', 2, 'LOCKED', DATEADD(MINUTE, 10, LOCALTIMESTAMP), 2);
 INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (3, 'A', 3, 'AVAILABLE');
 INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (3, 'A', 4, 'AVAILABLE');
 INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (3, 'A', 5, 'SOLD');

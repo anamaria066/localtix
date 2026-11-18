@@ -11,6 +11,8 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "seats")
 public class Seat {
@@ -28,6 +30,10 @@ public class Seat {
 
     @Enumerated(EnumType.STRING)
     private SeatStatus status;
+
+    // Temporary lock while the seat is in someone's cart (US-7)
+    private LocalDateTime lockedUntil;
+    private Long lockedByUserId;
 
     public Seat() {}
 
@@ -52,4 +58,10 @@ public class Seat {
 
     public SeatStatus getStatus() { return status; }
     public void setStatus(SeatStatus status) { this.status = status; }
+
+    public LocalDateTime getLockedUntil() { return lockedUntil; }
+    public void setLockedUntil(LocalDateTime lockedUntil) { this.lockedUntil = lockedUntil; }
+
+    public Long getLockedByUserId() { return lockedByUserId; }
+    public void setLockedByUserId(Long lockedByUserId) { this.lockedByUserId = lockedByUserId; }
 }
