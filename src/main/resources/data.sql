@@ -76,3 +76,15 @@ INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (5, 'A', 2, 
 INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (5, 'A', 3, 'SOLD');
 INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (5, 'A', 4, 'SOLD');
 INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (5, 'A', 5, 'SOLD');
+
+-- Event 6 (US-5 filters demo): a stand-up in București under 100 RON
+INSERT INTO events (title, category, city, location, date_time, base_price, description)
+VALUES ('Open Mic Comedy', 'STANDUP', 'București', 'Club Control', '2026-12-05 20:00:00', 60.00,
+        'Fresh voices of Romanian stand-up try out their newest material. Laughs guaranteed, drinks recommended.');
+
+-- Seats for event 6 (Open Mic Comedy): 1 SOLD
+INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (6, 'A', 1, 'AVAILABLE');
+INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (6, 'A', 2, 'AVAILABLE');
+INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (6, 'A', 3, 'SOLD');
+INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (6, 'A', 4, 'AVAILABLE');
+INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (6, 'A', 5, 'AVAILABLE');

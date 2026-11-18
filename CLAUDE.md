@@ -262,7 +262,7 @@ Criterii de acceptare:
 > - **`data.sql`** are 5 evenimente (4 viitoare, 1 trecut) și 45 de locuri. Poți adăuga sau modifica date de test acolo.
 > - Clasa de test este `EventCatalogServiceTest` (10 teste, toate verzi).
 
-#### US-5 Filtrare evenimente — responsabil **B**
+#### US-5 Filtrare evenimente — responsabil **B** ✅ implementat (T-5.1 – T-5.4)
 Ca vizitator, vreau să filtrez evenimentele după categorie, oraș, dată și preț.
 Criterii de acceptare:
 1. Filtrele se pot combina (ex. stand-up în București sub 100 lei).
@@ -283,6 +283,14 @@ Criterii de acceptare:
 > ⚠️ **Atenție (lăsat de David, US-6) — pentru US-5:**
 > - `EventCatalogController` conține acum și logica de afișare a prețurilor pe `/events/{id}` (metoda `addPrices`, record-ul `TicketPrice`, câmpul `priceCalculator`). Când extinzi controllerul pentru filtre, **nu șterge** aceste părți – modifică doar `showCatalog` (`/events`).
 > - Filtrul de preț (CA3) se aplică pe `Event.basePrice` (prețul de bază, fără reduceri) – așa apare și „Starting price” în catalog.
+
+> ⚠️ **Atenție (lăsat de Maria, US-5) — ce există acum, pentru toată echipa:**
+> - **`service/EventFilter`** (record): `category`, `city`, `dateFrom`, `dateTo` (LocalDate), `minPrice`, `maxPrice` (BigDecimal). `null` / gol = filtrul nu se aplică. În Thymeleaf se accesează cu paranteze: `${filter.city()}`.
+> - **`service/EventFilterService.filter(List<Event> events, EventFilter filter)`** – filtrează lista primită (de la `getUpcomingEvents(now)`), păstrând ordinea. Intervalele inversate aruncă `IllegalArgumentException` cu mesajele din constantele `INVALID_DATE_INTERVAL` / `INVALID_PRICE_INTERVAL`.
+> - **`EventCatalogController`** are acum în constructor și `EventFilterService`; `showCatalog` (`/events`) primește parametrii opționali `category`, `city`, `dateFrom`, `dateTo`, `minPrice`, `maxPrice` și pune în model `filter`, `filtersApplied`, `categories`, `cities`, `errorMessage` (în plus față de `events` și `seatCounts`). `showEventDetail` / `addPrices` nu au fost atinse.
+> - CSS nou în `style.css`: `form-select` în tema dark, `lt-filter-card` (card fără glow la hover).
+> - `data.sql` are acum un al 6-lea eveniment (`Open Mic Comedy`, STANDUP, București, 60 RON, 5 locuri) – dacă adaugi evenimente noi, ele primesc id-ul 7+.
+> - Testele: `EventFilterServiceTest` (14 teste, toate verzi).
 
 #### US-6 Calcul preț bilet — responsabil **A** ✅ implementat (T-6.1 – T-6.4)
 Ca client, vreau să văd prețul corect al biletului în funcție de categoria mea și de momentul cumpărării.

@@ -6,9 +6,74 @@
 
 <main class="container py-5">
     <h1 class="fw-bold lt-gradient-text mb-1">Upcoming Events</h1>
-    <p class="lt-muted mb-5">Concerts, stand-up and theatre near you.</p>
+    <p class="lt-muted mb-4">Concerts, stand-up and theatre near you.</p>
 
-    <div th:if="${events.isEmpty()}" class="text-center py-5">
+    <!-- US-5: filters (GET form, so the filters stay in the URL) -->
+    <div class="lt-card lt-filter-card p-4 mb-4">
+        <form th:action="@{/events}" method="get">
+            <div class="row g-3">
+                <div class="col-sm-6 col-lg-3">
+                    <label for="category" class="form-label">Category</label>
+                    <select id="category" name="category" class="form-select">
+                        <option value="">All categories</option>
+                        <option th:each="c : ${categories}"
+                                th:value="${c}"
+                                th:text="${c.displayName}"
+                                th:selected="${filter.category() == c}">Concert</option>
+                    </select>
+                </div>
+                <div class="col-sm-6 col-lg-3">
+                    <label for="city" class="form-label">City</label>
+                    <select id="city" name="city" class="form-select">
+                        <option value="">All cities</option>
+                        <option th:each="c : ${cities}"
+                                th:value="${c}"
+                                th:text="${c}"
+                                th:selected="${c == filter.city()}">București</option>
+                    </select>
+                </div>
+                <div class="col-6 col-lg-3">
+                    <label for="dateFrom" class="form-label">From date</label>
+                    <input type="date" id="dateFrom" name="dateFrom" class="form-control"
+                           th:value="${filter.dateFrom()}">
+                </div>
+                <div class="col-6 col-lg-3">
+                    <label for="dateTo" class="form-label">To date</label>
+                    <input type="date" id="dateTo" name="dateTo" class="form-control"
+                           th:value="${filter.dateTo()}">
+                </div>
+                <div class="col-6 col-lg-3">
+                    <label for="minPrice" class="form-label">Min price (RON)</label>
+                    <input type="number" id="minPrice" name="minPrice" class="form-control"
+                           min="0" step="0.01" placeholder="0"
+                           th:value="${filter.minPrice()}">
+                </div>
+                <div class="col-6 col-lg-3">
+                    <label for="maxPrice" class="form-label">Max price (RON)</label>
+                    <input type="number" id="maxPrice" name="maxPrice" class="form-control"
+                           min="0" step="0.01" placeholder="Any"
+                           th:value="${filter.maxPrice()}">
+                </div>
+                <div class="col-lg-6 d-flex align-items-end gap-2">
+                    <button type="submit" class="btn btn-lt-primary flex-fill">Apply filters</button>
+                    <a th:href="@{/events}" class="btn btn-lt-outline flex-fill">Reset filters</a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div th:if="${errorMessage}" class="alert alert-danger" role="alert" th:text="${errorMessage}"></div>
+
+    <p th:if="${filtersApplied and !events.isEmpty() and errorMessage == null}" class="lt-muted small mb-4"
+       th:text="${events.size() + (events.size() == 1 ? ' event found' : ' events found')}">2 events found</p>
+
+    <div th:if="${events.isEmpty() and filtersApplied}" class="text-center py-5">
+        <p class="fs-5 mb-2">No events found</p>
+        <p class="lt-muted mb-4">Try changing or resetting the filters.</p>
+        <a th:href="@{/events}" class="btn btn-lt-outline">Reset filters</a>
+    </div>
+
+    <div th:if="${events.isEmpty() and !filtersApplied}" class="text-center py-5">
         <p class="lt-muted fs-5">No upcoming events at the moment. Check back soon!</p>
     </div>
 
