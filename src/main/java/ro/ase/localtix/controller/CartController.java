@@ -7,12 +7,17 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import ro.ase.localtix.model.Order;
 import ro.ase.localtix.model.Seat;
 import ro.ase.localtix.model.SeatStatus;
 import ro.ase.localtix.model.TicketCategory;
+import ro.ase.localtix.repository.OrderRepository;
 import ro.ase.localtix.repository.SeatRepository;
+import ro.ase.localtix.service.CardDetails;
 import ro.ase.localtix.service.CartItem;
 import ro.ase.localtix.service.CartService;
+import ro.ase.localtix.service.PaymentException;
+import ro.ase.localtix.service.PaymentService;
 import ro.ase.localtix.service.SeatReservationService;
 
 import java.time.LocalDateTime;
@@ -22,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * Cart page (US-9): the seats in the customer's cart, the ticket category of each seat,
@@ -38,11 +44,17 @@ public class CartController {
 
     public static final String CART_EMPTY = "Your cart is empty. Choose your seats first.";
 
-    private final SeatRepository seatRepository;
-    private final CartService cartService = new CartService();
+    /** How many years after the current one are offered for the card expiry date. */
+    private static final int EXPIRY_YEARS_SHOWN = 10;
 
-    public CartController(SeatRepository seatRepository) {
+    private final SeatRepository seatRepository;
+    private final OrderRepository orderRepository;
+    private final CartService cartService = new CartService();
+    private final PaymentService paymentService = new PaymentService();
+
+    public CartController(SeatRepository seatRepository, OrderRepository orderRepository) {
         this.seatRepository = seatRepository;
+        this.orderRepository = orderRepository;
     }
 
     @GetMapping("/cart")
@@ -89,7 +101,7 @@ public class CartController {
         return "redirect:/cart";
     }
 
-    /** AC4: "Checkout" leads to the payment page (the card form comes with US-11). */
+    /** AC4: "Checkout" leads to the payment page with the card form (US-11). */
     @GetMapping("/checkout")
     public String showCheckout(HttpSession session, Model model, RedirectAttributes redirectAttributes) {
         Long userId = currentUserId(session);
@@ -101,7 +113,58 @@ public class CartController {
             redirectAttributes.addFlashAttribute("errorMessage", CART_EMPTY);
             return "redirect:/cart";
         }
+        addCardFormOptions(model);
         return "checkout";
+    }
+
+    /**
+     * US-11: simulated card payment of the seats in the cart.
+     * Success: the order is saved as PAID, the seats become SOLD and the cart is emptied.
+     * Failure: the error is shown on the payment page; the seats stay locked until the 10 minutes expire.
+     */
+    @PostMapping("/checkout/pay")
+    public String pay(@RequestParam String cardNumber, @RequestParam int expiryMonth,
+                      @RequestParam int expiryYear, @RequestParam String cvv,
+                      HttpSession session, Model model, RedirectAttributes redirectAttributes) {
+        Long userId = currentUserId(session);
+        if (userId == null) {
+            return "redirect:/login";
+        }
+        List<CartItem> items = addCartToModel(userId, session, model);
+        if (items.isEmpty()) {
+            // The 10 minutes have passed while the customer was on the payment page
+            redirectAttributes.addFlashAttribute("errorMessage", PaymentService.RESERVATION_EXPIRED);
+            return "redirect:/cart";
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        List<Seat> seats = items.stream().map(CartItem::seat).toList();
+        Order order = new Order(userId, seats, cartService.calculateTotal(items), now);
+        try {
+            paymentService.pay(order, new CardDetails(cardNumber, expiryMonth, expiryYear, cvv), now);
+        } catch (PaymentException e) {
+            // AC5: nothing is saved, the seats stay LOCKED; the form keeps what was typed (except the CVV)
+            model.addAttribute("errorMessage", e.getMessage());
+            model.addAttribute("cardNumber", cardNumber);
+            model.addAttribute("selectedMonth", expiryMonth);
+            model.addAttribute("selectedYear", expiryYear);
+            addCardFormOptions(model);
+            return "checkout";
+        }
+
+        // AC4: the seats are SOLD and the order is PAID
+        seatRepository.saveAll(seats);
+        orderRepository.save(order);
+        getCategories(session).clear();
+        return "redirect:/orders/" + order.getId();
+    }
+
+    /** The options of the expiry date selects: months 1-12 and the next years. */
+    private void addCardFormOptions(Model model) {
+        int currentYear = LocalDateTime.now().getYear();
+        model.addAttribute("months", IntStream.rangeClosed(1, 12).boxed().toList());
+        model.addAttribute("expiryYears",
+                IntStream.rangeClosed(currentYear, currentYear + EXPIRY_YEARS_SHOWN).boxed().toList());
     }
 
     /** Puts items, total and remaining time in the model; returns the items. */

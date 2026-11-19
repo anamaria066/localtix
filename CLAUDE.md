@@ -448,7 +448,7 @@ Criterii de acceptare:
 > - **UI-ul pentru anulare se face la T-12.4 [UI]** (pagina „My Tickets”, butonul „Cancel ticket”) – vezi nota de la US-12. `Event` **nu are** un câmp „anulat de organizator” – se trimite ca parametru `cancelledByOrganizer`.
 > - Testele: `RefundServiceTest` (12 teste, toate verzi).
 
-#### US-11 Plată online (simulată) — responsabil **A**
+#### US-11 Plată online (simulată) — responsabil **A** ✅ implementat (T-11.1 – T-11.4)
 Ca client, vreau să plătesc biletele online cu cardul.
 Criterii de acceptare:
 1. Plata este simulată, fără procesator real.
@@ -459,7 +459,7 @@ Criterii de acceptare:
 
 - **T-11.1 [RED]** – teste `PaymentServiceTest`
 - **T-11.2 [GREEN]** – implementare `PaymentService` + schimbarea statusului comenzii și al locurilor
-- **T-11.3 [REFACTOR]** – algoritmul Luhn într-o metodă separată, constante (16 cifre, 3 cifre CVV), enum pentru statusul comenzii
+- **T-11.3 [REFACTOR]** – algoritmul Luhn într-o metodă separată, constante (16 cifre, 3 cifre CVV), excepție proprie, metode extrase *(enum-ul `OrderStatus` a fost creat deja la T-11.1, fiindcă testele îl folosesc)*
 - **T-11.4 [UI]** – pagina de plată
 
 > ⚠️ **Atenție (lăsat de Ana, US-7) — pentru US-11:**
@@ -468,6 +468,18 @@ Criterii de acceptare:
 > ⚠️ **Atenție (lăsat de David, US-9) — pentru US-11:**
 > - Pagina de plată **există deja**: `/checkout` (`CartController.showCheckout`, `templates/checkout.html`) – rezumatul comenzii (`items`, `total`), cronometrul și un buton „Pay” **dezactivat** cu alerta „Online card payment will be available soon.”. La T-11.4 înlocuiești alerta și butonul cu formularul de card (nu crea altă pagină) și adaugi POST-ul de plată.
 > - Locurile de plătit = `cartService.getCartSeats(seatRepository.findByStatusAndLockedByUserId(LOCKED, userId), userId, now)`; prețul fiecăruia vine din categoria din sesiune (`CartController.SESSION_CART_CATEGORIES`). După plată golește această hartă din sesiune.
+
+> ⚠️ **Atenție (lăsat de David, US-11) — ce există acum, pentru toată echipa:**
+> - **`model/Order`** (tabela `orders`): `id`, `userId`, `seats` (`@ManyToMany`, tabela `order_seats`), `total` (BigDecimal), `createdAt`, `status` (**`model/OrderStatus`**: `PENDING` / `PAID`). Constructor `new Order(userId, seats, total, createdAt)` – pornește `PENDING`. **`repository/OrderRepository`** (doar metodele din `JpaRepository`).
+> - **`service/PaymentService`** (Java simplu, `new PaymentService()`): `pay(order, card, now)` validează cardul (16 cifre + Luhn, expirare, CVV 3 cifre) și că locurile sunt încă în coșul clientului; la succes locurile devin `SOLD` (fără `lockedUntil` / `lockedByUserId`) și comanda `PAID`. La eșec aruncă **`PaymentException`** (extinde `IllegalArgumentException`) cu `INVALID_CARD_NUMBER` / `CARD_EXPIRED` / `INVALID_CVV` / `RESERVATION_EXPIRED` și nu schimbă nimic. **`service/CardDetails`** (record): `cardNumber`, `expiryMonth`, `expiryYear`, `cvv`.
+> - **UI**: formularul de card e pe `/checkout`; POST `/checkout/pay` (`CartController.pay`) salvează locurile și comanda, golește categoriile din sesiune și redirecționează la **`/orders/{id}`** (`OrderController`, `templates/order-confirmation.html` – doar proprietarul comenzii o vede). CSS nou: `lt-badge-paid`. JS nou: `static/js/card-format.js` (afișează numărul cardului în grupuri de 4 cifre).
+> - Comanda **nu** reține categoria / prețul fiecărui bilet (doar totalul). Acestea sunt disponibile în `CartController.pay`, în lista `items` (`CartItem`: `seat`, `category`, `price`), **înainte** de golirea sesiunii.
+> - Testele: `PaymentServiceTest` (18 teste, toate verzi).
+
+> ⚠️ **Atenție (lăsat de David, US-11) — pentru US-12:**
+> - Biletele (`Ticket`) se generează după plata reușită: în `CartController.pay`, după `orderRepository.save(order)`, câte un bilet pentru fiecare `CartItem` din `items` (are locul, categoria și prețul). Numele clientului se ia din `UserRepository.findById(userId)`.
+> - **Salvează `item.price()` pe bilet** (ex. câmpul `paidPrice`) – e prețul plătit, de care are nevoie `RefundService.cancel(...)` (vezi nota Anei de mai jos). `Order` reține doar totalul.
+> - Pentru „My Tickets” poți adăuga în `OrderRepository` / în repository-ul de bilete metode de tip `findByUserId(...)`.
 
 #### US-12 Bilet electronic — responsabil **B**
 Ca client, vreau să primesc în cont un bilet electronic cu cod unic.

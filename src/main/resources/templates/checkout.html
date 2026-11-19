@@ -4,7 +4,7 @@
 <body>
 <nav th:replace="~{fragments/layout :: navbar}"></nav>
 
-<!-- US-9 AC4: payment page reached from the cart. The card form is added in US-11 (T-11.4). -->
+<!-- US-9 AC4: payment page reached from the cart. US-11: simulated card payment form. -->
 <main class="container py-5">
 
     <a th:href="@{/cart}" class="btn btn-lt-outline btn-sm mb-4">&larr; Back to cart</a>
@@ -45,11 +45,49 @@
                          th:text="${remainingSeconds / 60} + ':' + ${#numbers.formatInteger(remainingSeconds % 60, 2)}">10:00</div>
                 </div>
                 <h2 class="h5 mb-3">Card payment</h2>
-                <div class="alert alert-warning mb-3">
-                    Online card payment will be available soon.
+
+                <!-- US-11 AC5: failed payment -> error message, the seats stay reserved -->
+                <div class="alert alert-danger" th:if="${errorMessage}">
+                    <span th:text="${errorMessage}">The card has expired</span>
+                    <div class="small mt-1">Your seats are still reserved until the timer runs out.</div>
                 </div>
-                <button type="button" class="btn btn-lt-primary w-100" disabled
-                        th:text="'Pay ' + ${#numbers.formatDecimal(total, 1, 2)} + ' RON'">Pay 170.00 RON</button>
+
+                <!-- US-11 AC2 + AC3: card number, expiry date, CVV -->
+                <form method="post" th:action="@{/checkout/pay}" autocomplete="off">
+                    <div class="mb-3">
+                        <label for="cardNumber" class="form-label">Card number</label>
+                        <input type="text" id="cardNumber" name="cardNumber" class="form-control"
+                               inputmode="numeric" maxlength="19" placeholder="1234 5678 9012 3456" required
+                               th:value="${cardNumber}">
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-4">
+                            <label for="expiryMonth" class="form-label">Month</label>
+                            <select id="expiryMonth" name="expiryMonth" class="form-select" required>
+                                <option th:each="month : ${months}" th:value="${month}"
+                                        th:text="${#numbers.formatInteger(month, 2)}"
+                                        th:selected="${month == selectedMonth}">01</option>
+                            </select>
+                        </div>
+                        <div class="col-4">
+                            <label for="expiryYear" class="form-label">Year</label>
+                            <select id="expiryYear" name="expiryYear" class="form-select" required>
+                                <option th:each="year : ${expiryYears}" th:value="${year}" th:text="${year}"
+                                        th:selected="${year == selectedYear}">2026</option>
+                            </select>
+                        </div>
+                        <div class="col-4">
+                            <label for="cvv" class="form-label">CVV</label>
+                            <input type="password" id="cvv" name="cvv" class="form-control"
+                                   inputmode="numeric" maxlength="4" placeholder="123" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-lt-primary w-100"
+                            th:text="'Pay ' + ${#numbers.formatDecimal(total, 1, 2)} + ' RON'">Pay 170.00 RON</button>
+                </form>
+                <p class="small lt-muted mt-3 mb-0">
+                    This is a simulated payment &ndash; no money is charged and the card is not stored.
+                </p>
             </div>
         </div>
 
@@ -59,5 +97,6 @@
 <footer th:replace="~{fragments/layout :: footer}"></footer>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script th:src="@{/js/cart-timer.js}"></script>
+<script th:src="@{/js/card-format.js}"></script>
 </body>
 </html>
