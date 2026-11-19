@@ -9,20 +9,26 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import ro.ase.localtix.model.Order;
 import ro.ase.localtix.model.Seat;
+import ro.ase.localtix.model.Ticket;
 import ro.ase.localtix.model.SeatStatus;
 import ro.ase.localtix.model.TicketCategory;
+import ro.ase.localtix.model.User;
 import ro.ase.localtix.repository.OrderRepository;
 import ro.ase.localtix.repository.SeatRepository;
+import ro.ase.localtix.repository.TicketRepository;
+import ro.ase.localtix.repository.UserRepository;
 import ro.ase.localtix.service.CardDetails;
 import ro.ase.localtix.service.CartItem;
 import ro.ase.localtix.service.CartService;
 import ro.ase.localtix.service.PaymentException;
 import ro.ase.localtix.service.PaymentService;
 import ro.ase.localtix.service.SeatReservationService;
+import ro.ase.localtix.service.TicketService;
 
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -49,12 +55,18 @@ public class CartController {
 
     private final SeatRepository seatRepository;
     private final OrderRepository orderRepository;
+    private final TicketRepository ticketRepository;
+    private final UserRepository userRepository;
     private final CartService cartService = new CartService();
     private final PaymentService paymentService = new PaymentService();
+    private final TicketService ticketService = new TicketService();
 
-    public CartController(SeatRepository seatRepository, OrderRepository orderRepository) {
+    public CartController(SeatRepository seatRepository, OrderRepository orderRepository,
+                          TicketRepository ticketRepository, UserRepository userRepository) {
         this.seatRepository = seatRepository;
         this.orderRepository = orderRepository;
+        this.ticketRepository = ticketRepository;
+        this.userRepository = userRepository;
     }
 
     @GetMapping("/cart")
@@ -155,8 +167,17 @@ public class CartController {
         // AC4: the seats are SOLD and the order is PAID
         seatRepository.saveAll(seats);
         orderRepository.save(order);
+        createTickets(items, userId, now);
         getCategories(session).clear();
         return "redirect:/orders/" + order.getId();
+    }
+
+    /** US-12: one electronic ticket with a unique code for each paid seat, with the price paid. */
+    private void createTickets(List<CartItem> items, Long userId, LocalDateTime now) {
+        User customer = userRepository.findById(userId).orElseThrow();
+        Set<String> existingCodes = new HashSet<>(ticketRepository.findAllCodes());
+        List<Ticket> tickets = ticketService.createTickets(items, customer, existingCodes, now);
+        ticketRepository.saveAll(tickets);
     }
 
     /** The options of the expiry date selects: months 1-12 and the next years. */

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('My Tickets')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+
+<main class="container py-5">
+
+    <h1 class="h3 fw-bold lt-gradient-text mb-1">My Tickets</h1>
+    <p class="lt-muted mb-4">Your electronic tickets. Show the ticket code at the entrance.</p>
+
+    <!-- US-10 AC5: refunded amount / error (e.g. the event has already started) -->
+    <div class="alert alert-success" th:if="${successMessage}" th:text="${successMessage}">
+        Ticket cancelled. Refunded amount: 135.00 RON
+    </div>
+    <div class="alert alert-danger" th:if="${errorMessage}" th:text="${errorMessage}">Error.</div>
+
+    <!-- No tickets yet -->
+    <div class="lt-card lt-filter-card p-5 text-center" th:if="${tickets.isEmpty()}">
+        <h2 class="h5 mb-2">You have no tickets yet</h2>
+        <p class="lt-muted mb-4">After a successful payment, your tickets will appear here.</p>
+        <a th:href="@{/events}" class="btn btn-lt-primary">Browse events</a>
+    </div>
+
+    <!-- US-12 AC2 + AC3: one card for each ticket -->
+    <div class="row g-4" th:unless="${tickets.isEmpty()}">
+        <div class="col-md-6 col-lg-4" th:each="ticket : ${tickets}"
+             th:with="event=${ticket.seat.event},
+                      cancelled=${ticket.status == T(ro.ase.localtix.model.TicketStatus).CANCELLED}">
+            <div class="lt-card p-4 h-100 d-flex flex-column" th:classappend="${cancelled} ? 'lt-ticket-cancelled'">
+
+                <div class="d-flex justify-content-between align-items-start gap-2 mb-3">
+                    <h2 class="h5 fw-bold mb-0">
+                        <a th:href="@{/events/{id}(id=${event.id})}" th:text="${event.title}">Hamlet</a>
+                    </h2>
+                    <!-- US-12 AC4: "Active" / "Cancelled" -->
+                    <span class="badge lt-badge"
+                          th:classappend="${cancelled} ? 'lt-badge-cancelled' : 'lt-badge-paid'"
+                          th:text="${ticket.status.displayName}">Active</span>
+                </div>
+
+                <!-- AC1: the unique code -->
+                <div class="lt-ticket-code mb-3" th:text="${ticket.code}">LTX-2026-A1B2C3</div>
+
+                <div class="lt-detail">
+                    <span class="lt-muted">Date</span>
+                    <span th:text="${#temporals.format(event.dateTime, 'dd MMM yyyy, HH:mm')}">25 Nov 2026, 18:00</span>
+                </div>
+                <div class="lt-detail">
+                    <span class="lt-muted">Location</span>
+                    <span th:text="${event.location} + ', ' + ${event.city}">Teatrul Național, București</span>
+                </div>
+                <div class="lt-detail">
+                    <span class="lt-muted">Seat</span>
+                    <span class="fw-semibold" th:text="${ticket.seat.rowLabel} + ${ticket.seat.seatNumber}">A1</span>
+                </div>
+                <div class="lt-detail">
+                    <span class="lt-muted">Name</span>
+                    <span th:text="${ticket.customerName}">Maria Ionescu</span>
+                </div>
+                <div class="lt-detail">
+                    <span class="lt-muted">Price paid</span>
+                    <span th:text="${#numbers.formatDecimal(ticket.paidPrice, 1, 2) + ' RON'}">100.00 RON</span>
+                </div>
+                <div class="lt-detail" th:if="${cancelled}">
+                    <span class="lt-muted">Refunded</span>
+                    <span class="fw-semibold"
+                          th:text="${ticket.refundedAmount != null} ? ${#numbers.formatDecimal(ticket.refundedAmount, 1, 2) + ' RON'} : '-'">
+                        90.00 RON
+                    </span>
+                </div>
+
+                <!-- US-10: only active tickets can be cancelled -->
+                <form class="mt-auto pt-3" method="post" th:unless="${cancelled}"
+                      th:action="@{/my-tickets/{id}/cancel(id=${ticket.id})}">
+                    <button type="submit" class="btn btn-outline-danger w-100">Cancel ticket</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <p class="small lt-muted mt-4 mb-0" th:unless="${tickets.isEmpty()}">
+        Refund rules: more than 48 hours before the event you get the price back minus a 10% processing fee;
+        less than 48 hours before, there is no refund. If the organizer cancels the event, you get 100% back.
+        After the event has started, the ticket can no longer be cancelled.
+    </p>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

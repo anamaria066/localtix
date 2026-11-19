@@ -110,3 +110,34 @@ INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (7, 'B', 2, 
 INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (7, 'B', 3, 'AVAILABLE');
 INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (7, 'B', 4, 'AVAILABLE');
 INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (7, 'B', 5, 'AVAILABLE');
+
+
+-- Event 8 (US-12 / US-10): starts 24 hours after the application starts -> cancelling gives 0.00 RON
+INSERT INTO events (title, category, city, location, date_time, base_price, description)
+VALUES ('Jazz Tonight', 'CONCERT', 'Cluj-Napoca', 'Form Space', DATEADD(HOUR, 24, LOCALTIMESTAMP), 50.00,
+        'An intimate evening of live jazz with local musicians. Starts tomorrow!');
+
+-- Seats for event 8 (Jazz Tonight): A1 SOLD (Maria's ticket)
+INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (8, 'A', 1, 'SOLD');
+INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (8, 'A', 2, 'AVAILABLE');
+INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (8, 'A', 3, 'AVAILABLE');
+INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (8, 'A', 4, 'AVAILABLE');
+INSERT INTO seats (event_id, row_label, seat_number, status) VALUES (8, 'A', 5, 'AVAILABLE');
+
+-- Tickets (US-12) of Maria (user 2), shown on "My Tickets"
+-- Metrophonic Live, seat A3, Student price -> cancelling (more than 48h before) refunds 90%
+INSERT INTO tickets (code, seat_id, user_id, customer_name, paid_price, status, created_at)
+VALUES ('LTX-2026-MET0A3', (SELECT id FROM seats WHERE event_id = 1 AND row_label = 'A' AND seat_number = 3),
+        2, 'Maria Ionescu', 105.00, 'ACTIVE', '2026-11-01 12:00:00');
+-- Jazz Tonight, seat A1 -> starts in less than 48h, cancelling refunds 0.00 RON
+INSERT INTO tickets (code, seat_id, user_id, customer_name, paid_price, status, created_at)
+VALUES ('LTX-2026-JAZ0A1', (SELECT id FROM seats WHERE event_id = 8 AND row_label = 'A' AND seat_number = 1),
+        2, 'Maria Ionescu', 50.00, 'ACTIVE', '2026-11-01 12:00:00');
+-- Retro Night (past event), seat A1 -> cannot be cancelled anymore (red error)
+INSERT INTO tickets (code, seat_id, user_id, customer_name, paid_price, status, created_at)
+VALUES ('LTX-2026-RET0A1', (SELECT id FROM seats WHERE event_id = 5 AND row_label = 'A' AND seat_number = 1),
+        2, 'Maria Ionescu', 90.00, 'ACTIVE', '2026-09-15 12:00:00');
+-- A Night of Laughter, seat A2: already cancelled (US-12 AC4), 90% of 80.00 refunded; the seat is available again
+INSERT INTO tickets (code, seat_id, user_id, customer_name, paid_price, refunded_amount, status, created_at)
+VALUES ('LTX-2026-LAU0A2', (SELECT id FROM seats WHERE event_id = 2 AND row_label = 'A' AND seat_number = 2),
+        2, 'Maria Ionescu', 80.00, 72.00, 'CANCELLED', '2026-11-01 12:00:00');

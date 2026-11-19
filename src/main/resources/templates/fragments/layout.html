@@ -27,6 +27,9 @@
                 <a class="nav-link" th:href="@{/cart}">Cart</a>
             </li>
             <li class="nav-item" th:if="${session.userId != null}">
+                <a class="nav-link" th:href="@{/my-tickets}">My Tickets</a>
+            </li>
+            <li class="nav-item" th:if="${session.userId != null}">
                 <a class="nav-link" th:href="@{/profile}">My Profile</a>
             </li>
             <li class="nav-item" th:if="${session.userId != null}">

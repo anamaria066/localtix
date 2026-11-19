@@ -481,7 +481,7 @@ Criterii de acceptare:
 > - **Salvează `item.price()` pe bilet** (ex. câmpul `paidPrice`) – e prețul plătit, de care are nevoie `RefundService.cancel(...)` (vezi nota Anei de mai jos). `Order` reține doar totalul.
 > - Pentru „My Tickets” poți adăuga în `OrderRepository` / în repository-ul de bilete metode de tip `findByUserId(...)`.
 
-#### US-12 Bilet electronic — responsabil **B**
+#### US-12 Bilet electronic — responsabil **B** ✅ implementat (T-12.1 – T-12.4)
 Ca client, vreau să primesc în cont un bilet electronic cu cod unic.
 Criterii de acceptare:
 1. Pentru fiecare bilet plătit se generează un cod unic (ex. `LTX-2026-XXXXXX`).
@@ -491,9 +491,11 @@ Criterii de acceptare:
 
 - **T-12.1 [RED]** – teste `TicketServiceTest` (format cod `LTX-AAAA-XXXXXX`, coduri unice, bilet anulat marcat „Cancelled”)
 - **T-12.2 [GREEN]** – implementare `TicketService` + entitatea Ticket
-- **T-12.3 [REFACTOR]** – prefixul și lungimea codului în constante, enum pentru statusul biletului, metode extrase
+- **T-12.3 [REFACTOR]** – prefixul și lungimea codului în constante, metode extrase *(enum-ul `TicketStatus` și entitatea `Ticket` au fost create deja la T-12.1, fiindcă testele le folosesc)*
 - **T-12.4 [UI]** – pagina „My Tickets” + buton „Cancel ticket” legat de `RefundService` (UI-ul pentru US-10, vezi nota de mai jos)
 
+> ✅ Nota de mai jos a fost rezolvată la T-12.4 (butonul „Cancel ticket” e pe `/my-tickets`, legat de `RefundService` prin `TicketService.cancel`).
+>
 > ⚠️ **Atenție (lăsat de Ana, US-10) — pentru US-11 / US-12 – OBLIGATORIU la T-12.4 [UI]:**
 > - **US-10 (rambursare) nu are task [UI] propriu**: logica e gata (`RefundService`), dar la momentul US-10 nu existau bilete plătite. **Butonul „Cancel ticket” se face la T-12.4, pe pagina „My Tickets”**, și se leagă de `RefundService`. Fără el, US-10 nu poate fi folosit din aplicație.
 > - Ce trebuie făcut la T-12.4:
@@ -503,6 +505,21 @@ Criterii de acceptare:
 >   4. Afișați suma (US-10, CA5): alertă verde **„Ticket cancelled. Refunded amount: X RON”** (2 zecimale). La **`RefundNotAllowedException`** (eveniment început) – alertă roșie cu `e.getMessage()`.
 > - `paidPrice` = prețul final plătit pe bilet (calculat cu `PriceCalculator` la plată) → **salvați prețul plătit pe bilet** la US-11 / US-12, altfel nu se poate calcula rambursarea.
 > - Pentru verificare: un eveniment cu mai mult de 48h până la început → 90% din preț; pentru cazul „0.00 RON” adăugați în `data.sql` un eveniment care începe în mai puțin de 48h (ex. `DATEADD(HOUR, 24, LOCALTIMESTAMP)`), ca testul să nu depindă de data zilei.
+
+> ⚠️ **Atenție (lăsat de Maria, US-12) — ce există acum, pentru toată echipa:**
+> - **`model/Ticket`** (tabela `tickets`): `id`, `code` (unic), `seat` (`@ManyToOne`), `userId`, `customerName`, `paidPrice`, `refundedAmount` (null cât timp biletul e activ), `status`, `createdAt`. Evenimentul, data și locația se iau din `ticket.getSeat().getEvent()`. **`model/TicketStatus`**: `ACTIVE("Active")` / `CANCELLED("Cancelled")` cu `getDisplayName()`.
+> - **`repository/TicketRepository`**: `findByUserId(userId)`, `findAllCodes()`.
+> - **`service/TicketService`** (Java simplu, `new TicketService()` sau `new TicketService(new Random(seed))` în teste):
+>   - `generateCode(now, existingCodes)` → `LTX-<anul din now>-XXXXXX` (6 caractere `A–Z0–9`), niciodată un cod din `existingCodes`. Constante: `CODE_PREFIX`, `CODE_RANDOM_LENGTH`, `CODE_CHARACTERS`.
+>   - `createTicket(seat, customer, paidPrice, existingCodes, now)` / `createTickets(List<CartItem>, customer, existingCodes, now)` – coduri unice și în cadrul aceleiași comenzi.
+>   - `getTicketsForCustomer(tickets, userId)` – biletele clientului, cel mai apropiat eveniment primul.
+>   - `cancel(ticket, cancelledByOrganizer, now)` → apelează **`RefundService.cancel`** (regulile 48h / 10% / eveniment început), marchează biletul `CANCELLED`, salvează `refundedAmount` și întoarce suma. Bilet deja anulat → **`TicketAlreadyCancelledException`** (`TICKET_ALREADY_CANCELLED`); eveniment început → `RefundNotAllowedException`, biletul rămâne activ. Ambele extind `IllegalArgumentException`.
+>   - `getStatusLabel(ticket)` → „Active” / „Cancelled”.
+> - **Generarea biletelor**: în `CartController.pay`, după `orderRepository.save(order)` → metoda privată `createTickets(items, userId, now)`. `CartController` are acum în constructor și `TicketRepository`, `UserRepository`.
+> - **Pagina „My Tickets”**: `/my-tickets` (`MyTicketsController`, `templates/my-tickets.html`), link „My Tickets” în navbar (doar logat) și buton „View my tickets” pe confirmarea comenzii. POST `/my-tickets/{ticketId}/cancel` (doar biletele proprii, altfel `TICKET_NOT_FOUND`): alertă verde „Ticket cancelled. Refunded amount: X RON” sau roșie cu mesajul excepției. CSS nou: `lt-ticket-code`, `lt-badge-cancelled`, `lt-ticket-cancelled`.
+> - **Organizatorul care anulează evenimentul** (US-10 CA1, 100%) nu are încă UI: `TicketService.cancel(ticket, true, now)` e gata, dar nu există pagină de organizator.
+> - `data.sql`: evenimentul 8 **„Jazz Tonight”** (începe la 24h după pornirea aplicației) și 4 bilete ale Mariei (user 2): `LTX-2026-MET0A3` (Metrophonic A3, 105.00 → 94.50 la anulare), `LTX-2026-JAZ0A1` (Jazz A1 → 0.00), `LTX-2026-RET0A1` (Retro Night, eveniment trecut → eroare), `LTX-2026-LAU0A2` (deja anulat, 72.00 rambursat). Biletele noi primesc id-ul 5+.
+> - Testele: `TicketServiceTest` (17 teste, toate verzi).
 
 ---
 

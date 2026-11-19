@@ -357,6 +357,30 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     color: var(--lt-warning);
 }
 
+/* My Tickets (US-12) */
+.lt-ticket-code {
+    font-family: SFMono-Regular, Consolas, "Liberation Mono", monospace;
+    font-size: 1.15rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-align: center;
+    padding: 0.6rem;
+    border: 1px dashed var(--lt-purple);
+    border-radius: 0.6rem;
+    background-color: rgba(139, 92, 246, 0.08);
+}
+
+.lt-badge-cancelled { background-color: var(--lt-danger); }
+
+.lt-ticket-cancelled {
+    opacity: 0.6;
+}
+
+.lt-ticket-cancelled .lt-ticket-code {
+    text-decoration: line-through;
+    border-color: var(--lt-border);
+}
+
 /* Footer */
 .lt-footer {
     border-top: 1px solid var(--lt-border);
