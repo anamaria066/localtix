@@ -44,7 +44,8 @@
                                 class="lt-seat" th:classappend="${seat.cssClass()}"
                                 th:value="${seat.id()}"
                                 th:title="${seat.label()} + ' – ' + ${seat.tooltip()}"
-                                th:disabled="${!loggedIn or !seat.selectable()}"
+                                th:formaction="${seat.mine()} ? @{/events/{id}/seats/release(id=${event.id})}"
+                                th:disabled="${!loggedIn or !(seat.selectable() or seat.mine())}"
                                 th:text="${seat.number()}">1</button>
                         <span class="lt-row-label" th:text="${row.key}">A</span>
                     </div>
@@ -81,13 +82,20 @@
                 </p>
 
                 <div th:unless="${mySeats.isEmpty()}">
-                    <div class="lt-detail" th:each="seat : ${mySeats}">
+                    <div class="lt-detail align-items-center" th:each="seat : ${mySeats}">
                         <span class="fw-semibold" th:text="'Seat ' + ${seat.label()}">Seat A1</span>
                         <span class="lt-muted"
                               th:text="'Reserved until ' + ${#temporals.format(seat.lockedUntil(), 'HH:mm')}">
                             Reserved until 12:10
                         </span>
+                        <form method="post" th:action="@{/events/{id}/seats/release(id=${event.id})}" class="m-0">
+                            <input type="hidden" name="seatId" th:value="${seat.id()}">
+                            <button type="submit" class="btn btn-lt-outline btn-sm">Remove</button>
+                        </form>
                     </div>
+                    <p class="small lt-muted mt-3 mb-0">
+                        Changed your mind? Click a seat in your cart again to remove it.
+                    </p>
                     <p class="small lt-muted mt-3 mb-0"
                        th:text="'Seats stay reserved for ' + ${lockMinutes}
                                 + ' minutes. If you do not pay in time, they are released automatically.'">

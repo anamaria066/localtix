@@ -352,6 +352,7 @@ Criterii de acceptare:
 > - **Harta sălii**: `/events/{id}/seats` (`SeatMapController`, `templates/seats.html`). GET afișează harta (eliberează întâi blocările expirate); POST cu `seatId` rezervă locul (doar logat; altfel redirect `/login`). Butonul „Get Tickets” de pe `/events/{id}` duce acum aici. CSS nou: `lt-stage`, `lt-seat`, `lt-seat-available/locked/sold/selected`, `lt-seat-legend`.
 > - `data.sql`: locul A2 de la Hamlet (event 3) e în coșul Mariei (user 2) 10 minute de la pornirea aplicației, apoi se eliberează.
 > - „Available seats” din catalog / detalii (`countAvailableSeats`) numără doar `AVAILABLE`; blocările expirate devin AVAILABLE în baza de date abia când cineva deschide harta sălii.
+> - **Deselectare pe hartă (fix după US-9):** un loc din coșul tău (alb) se poate apăsa din nou ca să fie scos din coș, iar cardul „Your seats” are câte un buton „Remove”. Ambele trimit POST la `/events/{id}/seats/release` (`SeatMapController.releaseSeat`), care refolosește `CartService.removeTicket` (verifică dacă locul e chiar în coșul tău, apoi îl eliberează) – nu există logică nouă de eliberare. Categoria aleasă în coș pentru acel loc se șterge singură din sesiune (`CartController.forgetSeatsNoLongerInCart`).
 
 #### US-8 Limite de cumpărare — responsabil **B** ✅ implementat (T-8.1 – T-8.4)
 Ca organizator, vreau limite la cumpărarea biletelor, pentru a preveni revânzarea și accesul minorilor la evenimente interzise lor.
@@ -423,7 +424,7 @@ Criterii de acceptare:
 
 ### SPRINT 4 – Plată și bilete
 
-#### US-10 Rambursare — responsabil **C**
+#### US-10 Rambursare — responsabil **C** ✅ implementat (T-10.1 – T-10.3)
 Ca client, vreau să pot anula un bilet și să primesc banii înapoi conform regulilor.
 Criterii de acceptare:
 1. Dacă organizatorul anulează evenimentul, clientul primește 100%.
@@ -436,8 +437,16 @@ Criterii de acceptare:
 - **T-10.2 [GREEN]** – implementare `RefundService`
 - **T-10.3 [REFACTOR]** – constante (48h, 10%), excepție proprie, metode extrase
 
+> ✅ Nota de mai jos a fost rezolvată la US-10 (`RefundService` eliberează locul cu `SeatReservationService.release`).
+>
 > ⚠️ **Atenție (lăsat de Ana, US-7) — pentru US-10:**
 > - La anulare (CA5), locul redevine disponibil cu `seat.setStatus(SeatStatus.AVAILABLE)` și trebuie golite și `lockedUntil` / `lockedByUserId` (câmpuri adăugate în `Seat` la US-7), ca harta sălii să-l arate liber.
+
+> ⚠️ **Atenție (lăsat de Ana, US-10) — ce există acum, pentru toată echipa:**
+> - **`service/RefundService`** (Java simplu, `new RefundService()`): `cancel(Seat seat, BigDecimal paidPrice, boolean cancelledByOrganizer, LocalDateTime now)` → suma rambursată (BigDecimal, 2 zecimale, `HALF_UP`) și **eliberează locul** (prin `SeatReservationService.release`). Reguli: organizatorul anulează → 100%; clientul anulează cu **strict mai mult** de 48h înainte → 90%; altfel (inclusiv la exact 48h) → 0.00 (locul se eliberează oricum). Evenimentul început (`now >= dateTime`) → **`RefundNotAllowedException`** (extinde `IllegalArgumentException`) cu `EVENT_ALREADY_STARTED`; locul nu se atinge.
+> - Constante publice: `REFUND_MIN_HOURS_BEFORE = 48`, `PROCESSING_FEE_PERCENT = 10`, `EVENT_ALREADY_STARTED`.
+> - **UI-ul pentru anulare se face la T-12.4 [UI]** (pagina „My Tickets”, butonul „Cancel ticket”) – vezi nota de la US-12. `Event` **nu are** un câmp „anulat de organizator” – se trimite ca parametru `cancelledByOrganizer`.
+> - Testele: `RefundServiceTest` (12 teste, toate verzi).
 
 #### US-11 Plată online (simulată) — responsabil **A**
 Ca client, vreau să plătesc biletele online cu cardul.
@@ -471,7 +480,17 @@ Criterii de acceptare:
 - **T-12.1 [RED]** – teste `TicketServiceTest` (format cod `LTX-AAAA-XXXXXX`, coduri unice, bilet anulat marcat „Cancelled”)
 - **T-12.2 [GREEN]** – implementare `TicketService` + entitatea Ticket
 - **T-12.3 [REFACTOR]** – prefixul și lungimea codului în constante, enum pentru statusul biletului, metode extrase
-- **T-12.4 [UI]** – pagina „My Tickets”
+- **T-12.4 [UI]** – pagina „My Tickets” + buton „Cancel ticket” legat de `RefundService` (UI-ul pentru US-10, vezi nota de mai jos)
+
+> ⚠️ **Atenție (lăsat de Ana, US-10) — pentru US-11 / US-12 – OBLIGATORIU la T-12.4 [UI]:**
+> - **US-10 (rambursare) nu are task [UI] propriu**: logica e gata (`RefundService`), dar la momentul US-10 nu existau bilete plătite. **Butonul „Cancel ticket” se face la T-12.4, pe pagina „My Tickets”**, și se leagă de `RefundService`. Fără el, US-10 nu poate fi folosit din aplicație.
+> - Ce trebuie făcut la T-12.4:
+>   1. Pe fiecare bilet activ din „My Tickets”, un buton **„Cancel ticket”** (POST, ex. `/my-tickets/{ticketId}/cancel`; doar biletele clientului logat). Biletele deja anulate nu au buton.
+>   2. Controllerul apelează **`RefundService.cancel(ticket's seat, paidPrice, cancelledByOrganizer, LocalDateTime.now())`** – nu rescrieți regulile de 48h / 10% / eveniment început. `cancelledByOrganizer` = `false` când anulează clientul. Salvați apoi locul (`seatRepository.save(seat)` – `cancel` l-a făcut deja `AVAILABLE`).
+>   3. Marcați biletul **„Cancelled”** (US-12, CA4) și salvați suma rambursată pe bilet, ca să rămână vizibilă.
+>   4. Afișați suma (US-10, CA5): alertă verde **„Ticket cancelled. Refunded amount: X RON”** (2 zecimale). La **`RefundNotAllowedException`** (eveniment început) – alertă roșie cu `e.getMessage()`.
+> - `paidPrice` = prețul final plătit pe bilet (calculat cu `PriceCalculator` la plată) → **salvați prețul plătit pe bilet** la US-11 / US-12, altfel nu se poate calcula rambursarea.
+> - Pentru verificare: un eveniment cu mai mult de 48h până la început → 90% din preț; pentru cazul „0.00 RON” adăugați în `data.sql` un eveniment care începe în mai puțin de 48h (ex. `DATEADD(HOUR, 24, LOCALTIMESTAMP)`), ca testul să nu depindă de data zilei.
 
 ---
 

@@ -322,6 +322,12 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     border-color: var(--lt-blue);
     color: var(--lt-blue);
     box-shadow: 0 0 12px rgba(79, 107, 255, 0.6);
+    cursor: pointer;
+}
+
+.lt-seat-selected:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 16px rgba(139, 92, 246, 0.8);
 }
 
 /* Small coloured squares in the legend */

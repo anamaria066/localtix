@@ -14,6 +14,7 @@ import ro.ase.localtix.model.SeatStatus;
 import ro.ase.localtix.model.User;
 import ro.ase.localtix.repository.SeatRepository;
 import ro.ase.localtix.repository.UserRepository;
+import ro.ase.localtix.service.CartService;
 import ro.ase.localtix.service.EventCatalogService;
 import ro.ase.localtix.service.PurchaseLimitsValidator;
 import ro.ase.localtix.service.SeatReservationService;
@@ -29,7 +30,8 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
- * Seat map of an event (US-7): shows the seats and lets a logged-in customer reserve one.
+ * Seat map of an event (US-7): shows the seats and lets a logged-in customer reserve one,
+ * or click a seat from their cart again to deselect it.
  * Before a seat is reserved, the purchase limits are checked (US-8).
  */
 @Controller
@@ -43,6 +45,7 @@ public class SeatMapController {
     private final UserRepository userRepository;
     private final SeatReservationService seatReservationService = new SeatReservationService();
     private final PurchaseLimitsValidator purchaseLimitsValidator = new PurchaseLimitsValidator();
+    private final CartService cartService = new CartService();
 
     public SeatMapController(EventCatalogService eventCatalogService, SeatRepository seatRepository,
                              UserRepository userRepository) {
@@ -102,6 +105,41 @@ public class SeatMapController {
         return "redirect:/events/" + id + "/seats";
     }
 
+    /** Deselects a seat from the customer's cart: the seat becomes available again. */
+    @PostMapping("/events/{id}/seats/release")
+    public String releaseSeat(@PathVariable Long id, @RequestParam Long seatId,
+                              HttpSession session, RedirectAttributes redirectAttributes) {
+        Long userId = currentUserId(session);
+        if (userId == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", LOGIN_REQUIRED);
+            return "redirect:/login";
+        }
+        try {
+            Seat seat = unlockSeat(id, seatId, userId);
+            redirectAttributes.addFlashAttribute("successMessage",
+                    "Seat " + label(seat) + " has been removed from your cart.");
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
+        return "redirect:/events/" + id + "/seats";
+    }
+
+    /**
+     * Reads the seat, releases it and saves it. CartService.removeTicket (US-9) checks that the seat
+     * is really in this customer's cart, so nobody can free someone else's seat.
+     */
+    private synchronized Seat unlockSeat(Long eventId, Long seatId, Long userId) {
+        Seat seat = findEventSeat(eventId, seatId);
+        cartService.removeTicket(seat, userId, LocalDateTime.now());
+        return seatRepository.save(seat);
+    }
+
+    private Seat findEventSeat(Long eventId, Long seatId) {
+        return seatRepository.findById(seatId)
+                .filter(s -> s.getEvent().getId().equals(eventId))
+                .orElseThrow(() -> new SeatUnavailableException(SEAT_NOT_FOUND));
+    }
+
     /**
      * Reads the seat, reserves it and saves it.
      * "synchronized": if two customers click the same seat at the same time, they are handled
@@ -109,9 +147,7 @@ public class SeatMapController {
      */
     private synchronized Seat lockSeat(Long eventId, Long seatId, Long userId) {
         LocalDateTime now = LocalDateTime.now();
-        Seat seat = seatRepository.findById(seatId)
-                .filter(s -> s.getEvent().getId().equals(eventId))
-                .orElseThrow(() -> new SeatUnavailableException(SEAT_NOT_FOUND));
+        Seat seat = findEventSeat(eventId, seatId);
         checkPurchaseLimits(eventId, userId, now);
         seatReservationService.reserve(seat, userId, now);
         return seatRepository.save(seat);
@@ -172,7 +208,7 @@ public class SeatMapController {
 
     private String tooltip(SeatStatus status, boolean mine) {
         if (mine) {
-            return "In your cart";
+            return "In your cart (click to remove)";
         }
         return switch (status) {
             case AVAILABLE -> "Available";
