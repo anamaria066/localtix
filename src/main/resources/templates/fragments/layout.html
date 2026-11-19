@@ -24,6 +24,9 @@
             </li>
             <!-- Logged in: the session holds "userId" (ProfileController.SESSION_USER_ID) -->
             <li class="nav-item" th:if="${session.userId != null}">
+                <a class="nav-link" th:href="@{/cart}">Cart</a>
+            </li>
+            <li class="nav-item" th:if="${session.userId != null}">
                 <a class="nav-link" th:href="@{/profile}">My Profile</a>
             </li>
             <li class="nav-item" th:if="${session.userId != null}">

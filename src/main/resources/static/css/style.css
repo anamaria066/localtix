@@ -334,6 +334,22 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     margin-right: 0.35rem;
 }
 
+/* Cart countdown (US-9): 10 minutes of reservation */
+.lt-timer {
+    font-size: 2.25rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    background: var(--lt-gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.lt-timer-warning {
+    background: none;
+    color: var(--lt-warning);
+}
+
 /* Footer */
 .lt-footer {
     border-top: 1px solid var(--lt-border);

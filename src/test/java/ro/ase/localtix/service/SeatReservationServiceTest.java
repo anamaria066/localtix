@@ -181,4 +181,19 @@ class SeatReservationServiceTest {
         assertEquals(SEAT_LOCKED, ex.getMessage());
         assertEquals(ANA, seat.getLockedByUserId());
     }
+
+    // --- US-9 AC2: a seat removed from the cart is released ---
+
+    // US-9 AC2: releasing a locked seat makes it available again
+    @Test
+    void releasedSeatBecomesAvailable() {
+        Seat seat = seat(SeatStatus.AVAILABLE);
+        service.reserve(seat, ANA, now);
+
+        service.release(seat);
+
+        assertEquals(SeatStatus.AVAILABLE, seat.getStatus());
+        assertNull(seat.getLockedUntil());
+        assertNull(seat.getLockedByUserId());
+    }
 }

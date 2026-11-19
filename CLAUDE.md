@@ -387,7 +387,7 @@ Criterii de acceptare:
 > - `data.sql`: evenimentul 7 **„Late Night Roast”** (STANDUP, București, 18+, 10 locuri) și utilizatorul 3 **Andrei Georgescu** (`andrei@localtix.ro`, născut 2010-03-15, minor, parola `Parola123!`).
 > - Testele: `PurchaseLimitsTest` (12 teste, toate verzi).
 
-#### US-9 Coș și finalizare comandă — responsabil **A**
+#### US-9 Coș și finalizare comandă — responsabil **A** ✅ implementat (T-9.1 – T-9.4)
 Ca client, vreau să văd biletele alese într-un coș înainte de plată.
 Criterii de acceptare:
 1. Coșul afișează evenimentul, locurile, categoria fiecărui bilet, prețul pe bilet și totalul.
@@ -410,6 +410,16 @@ Criterii de acceptare:
 > - Locurile din coș sunt locurile `LOCKED` cu `Seat.lockedByUserId` = clientul logat (vezi nota de la US-7). Timpul rămas (CA3) = `Seat.lockedUntil` − `now`; durata e `SeatReservationService.LOCK_DURATION_MINUTES` – nu redefini 10 minute în `CartService`.
 > - Pentru ștergerea din coș (CA2) `SeatReservationService` **nu are** încă o metodă publică de eliberare a unui singur loc (are doar `unlock` privat, folosit de `releaseExpiredLocks`) – adaug-o tu (ex. `release(seat)`) cu test, fără să schimbi metodele existente.
 > - Pagina `/events/{id}/seats` are cardul „Your seats” (locurile din coș cu „Reserved until HH:mm”) – acolo se poate pune butonul spre coș.
+
+> ⚠️ **Atenție (lăsat de David, US-9) — ce există acum, pentru toată echipa:**
+> - **Coșul NU e o entitate nouă**: coșul = locurile `LOCKED` cu `lockedByUserId` = clientul și `lockedUntil` în viitor (ca la US-7). Sesiunea ține doar categoria aleasă pentru fiecare loc: cheia `CartController.SESSION_CART_CATEGORIES` (`"cartCategories"`) → `Map<Long seatId, TicketCategory>`; implicit `NORMAL`.
+> - **`service/CartService`** (Java simplu, `new CartService()`): `getCartSeats(seats, userId, now)`, `addTicket(eventSeats, seat, userId, now)` (limita de 6 din US-8 + `reserve`), `removeTicket(seat, userId, now)` (aruncă `NOT_IN_CART` dacă locul nu e în coșul clientului; altfel îl eliberează), `calculateTicketPrice(event, category, now)` (prin `PriceCalculator`), `calculateTotal(List<CartItem>)` (2 zecimale), `getRemainingSeconds(cartSeats, now)` (până expiră primul loc, niciodată negativ).
+> - **`service/CartItem`** (record): `seat`, `category`, `price` – în Thymeleaf cu paranteze: `${item.price()}`.
+> - **`SeatReservationService.release(seat)`** – metodă publică nouă: locul devine `AVAILABLE` și se golesc `lockedUntil` / `lockedByUserId`. Folosiți-o și la rambursare (US-10, CA5).
+> - **`SeatRepository.findByStatusAndLockedByUserId(status, userId)`** – locurile unui client de la toate evenimentele.
+> - **Pagini**: `/cart` (`CartController`, `templates/cart.html`; POST `/cart/category`, POST `/cart/remove`) și `/checkout` (`templates/checkout.html`; coș gol → redirect `/cart` cu `CART_EMPTY`). Link „Cart” în navbar (doar logat) și buton „Go to cart” pe harta sălii. Cronometrul e în `static/js/cart-timer.js` (citește `data-seconds` de pe `#cart-timer`, la 0 reîncarcă `/cart`). CSS nou: `lt-timer`, `lt-timer-warning`.
+> - `SeatMapController` **nu** a fost modificat (în afară de butonul din `seats.html`); el verifică încă singur limitele (US-8) înainte de `reserve`.
+> - Testele: `CartServiceTest` (17 teste) + `SeatReservationServiceTest.releasedSeatBecomesAvailable` – toate verzi.
 
 ### SPRINT 4 – Plată și bilete
 
@@ -445,6 +455,10 @@ Criterii de acceptare:
 
 > ⚠️ **Atenție (lăsat de Ana, US-7) — pentru US-11:**
 > - La plată reușită (CA4): `seat.setStatus(SeatStatus.SOLD)` și golește `lockedUntil` / `lockedByUserId`. La plată eșuată (CA5) nu atinge locurile – rămân `LOCKED` și se eliberează singure prin `SeatReservationService.releaseExpiredLocks` după 10 minute.
+
+> ⚠️ **Atenție (lăsat de David, US-9) — pentru US-11:**
+> - Pagina de plată **există deja**: `/checkout` (`CartController.showCheckout`, `templates/checkout.html`) – rezumatul comenzii (`items`, `total`), cronometrul și un buton „Pay” **dezactivat** cu alerta „Online card payment will be available soon.”. La T-11.4 înlocuiești alerta și butonul cu formularul de card (nu crea altă pagină) și adaugi POST-ul de plată.
+> - Locurile de plătit = `cartService.getCartSeats(seatRepository.findByStatusAndLockedByUserId(LOCKED, userId), userId, now)`; prețul fiecăruia vine din categoria din sesiune (`CartController.SESSION_CART_CATEGORIES`). După plată golește această hartă din sesiune.
 
 #### US-12 Bilet electronic — responsabil **B**
 Ca client, vreau să primesc în cont un bilet electronic cu cod unic.

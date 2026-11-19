@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('My Cart')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+
+<main class="container py-5">
+
+    <h1 class="h3 fw-bold lt-gradient-text mb-1">My Cart</h1>
+    <p class="lt-muted mb-4">Review your tickets before payment.</p>
+
+    <div class="alert alert-success" th:if="${successMessage}" th:text="${successMessage}">Seat removed.</div>
+    <div class="alert alert-danger" th:if="${errorMessage}" th:text="${errorMessage}">Error.</div>
+
+    <!-- Empty cart -->
+    <div class="lt-card lt-filter-card p-5 text-center" th:if="${items.isEmpty()}">
+        <h2 class="h5 mb-2">Your cart is empty</h2>
+        <p class="lt-muted mb-4">Choose your seats on the seat map of an event to add tickets to your cart.</p>
+        <a th:href="@{/events}" class="btn btn-lt-primary">Browse events</a>
+    </div>
+
+    <div class="row g-4" th:unless="${items.isEmpty()}">
+
+        <!-- AC1: tickets in the cart -->
+        <div class="col-lg-8">
+            <div class="lt-card lt-filter-card p-4">
+                <h2 class="h5 mb-3">Tickets</h2>
+                <div class="table-responsive">
+                    <table class="table lt-table align-middle mb-0">
+                        <thead>
+                        <tr>
+                            <th>Event</th>
+                            <th class="text-center">Seat</th>
+                            <th>Category</th>
+                            <th class="text-end">Price</th>
+                            <th></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="item : ${items}" th:with="event=${item.seat().event}">
+                            <td>
+                                <a th:href="@{/events/{id}(id=${event.id})}" class="fw-semibold"
+                                   th:text="${event.title}">Hamlet</a>
+                                <div class="small lt-muted"
+                                     th:text="${#temporals.format(event.dateTime, 'dd MMM yyyy, HH:mm')} + ' · ' + ${event.location}">
+                                    25 Nov 2026, 18:00 · Teatrul Național
+                                </div>
+                            </td>
+                            <td class="text-center fw-semibold"
+                                th:text="${item.seat().rowLabel} + ${item.seat().seatNumber}">A1</td>
+                            <td>
+                                <form method="post" th:action="@{/cart/category}">
+                                    <input type="hidden" name="seatId" th:value="${item.seat().id}">
+                                    <select name="category" class="form-select form-select-sm"
+                                            onchange="this.form.submit()" aria-label="Ticket category">
+                                        <option th:each="category : ${categories}"
+                                                th:value="${category}"
+                                                th:text="${category.displayName}"
+                                                th:selected="${category == item.category()}">Normal</option>
+                                    </select>
+                                </form>
+                            </td>
+                            <td class="text-end">
+                                <div class="small lt-muted text-decoration-line-through"
+                                     th:if="${item.price().compareTo(event.basePrice) < 0}"
+                                     th:text="${#numbers.formatDecimal(event.basePrice, 1, 2) + ' RON'}">100.00 RON</div>
+                                <span class="fw-bold lt-final-price"
+                                      th:text="${#numbers.formatDecimal(item.price(), 1, 2) + ' RON'}">70.00 RON</span>
+                            </td>
+                            <td class="text-end">
+                                <!-- AC2: remove the ticket, the seat is released -->
+                                <form method="post" th:action="@{/cart/remove}">
+                                    <input type="hidden" name="seatId" th:value="${item.seat().id}">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Remove</button>
+                                </form>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p class="small lt-muted mt-3 mb-0">
+                    Student and senior discounts apply to the ticket category you choose.
+                    Discounts do not add up &ndash; only the biggest one is applied.
+                </p>
+            </div>
+        </div>
+
+        <!-- Summary: AC3 time left + total + AC4 checkout -->
+        <div class="col-lg-4">
+            <div class="lt-card p-4">
+                <h2 class="h5 mb-3">Summary</h2>
+
+                <div class="text-center mb-3">
+                    <div class="small lt-muted">Your seats are reserved for</div>
+                    <div id="cart-timer" class="lt-timer"
+                         th:attr="data-seconds=${remainingSeconds},data-expired-url=@{/cart}"
+                         th:text="${remainingSeconds / 60} + ':' + ${#numbers.formatInteger(remainingSeconds % 60, 2)}">10:00</div>
+                </div>
+
+                <div class="lt-detail">
+                    <span class="lt-muted">Tickets</span>
+                    <span th:text="${items.size()}">2</span>
+                </div>
+                <div class="lt-detail">
+                    <span class="fw-semibold">Total</span>
+                    <span class="fw-bold lt-final-price"
+                          th:text="${#numbers.formatDecimal(total, 1, 2) + ' RON'}">170.00 RON</span>
+                </div>
+
+                <a th:href="@{/checkout}" class="btn btn-lt-primary w-100 mt-4">Checkout</a>
+                <a th:href="@{/events}" class="btn btn-lt-outline w-100 mt-2">Add more tickets</a>
+
+                <p class="small lt-muted mt-3 mb-0"
+                   th:text="'Seats stay reserved for ' + ${lockMinutes}
+                            + ' minutes. If you do not pay in time, they are released automatically.'">
+                    Seats stay reserved for 10 minutes.
+                </p>
+            </div>
+        </div>
+
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script th:src="@{/js/cart-timer.js}"></script>
+</body>
+</html>

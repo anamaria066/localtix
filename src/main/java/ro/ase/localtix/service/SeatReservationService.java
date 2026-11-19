@@ -43,6 +43,11 @@ public class SeatReservationService {
                 .forEach(this::unlock);
     }
 
+    /** Frees one seat, e.g. when the customer removes it from the cart (US-9). */
+    public void release(Seat seat) {
+        unlock(seat);
+    }
+
     /** The status shown on the seat map at the moment "now": an expired lock counts as available. */
     public SeatStatus getDisplayStatus(Seat seat, LocalDateTime now) {
         return hasExpiredLock(seat, now) ? SeatStatus.AVAILABLE : seat.getStatus();
